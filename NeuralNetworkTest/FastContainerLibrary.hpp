@@ -17,6 +17,5 @@
 #include "FastMatrix.hpp"
 
 namespace FastContainer {
-	using namespace std;
-	using namespace concurrency;
+
 }

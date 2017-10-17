@@ -6,7 +6,7 @@
 #define FAST_CONTAONER_OPERATOR_OVERLOAD_AMP_MODE
 //#define FAST_CONTAINER_NO_EXCEPTION
 
-#include "FastContainerLibrary.hpp"
+#include "NeuralNetworkLibrary.hpp"
 
 #include <chrono>
 #include <iostream>
@@ -27,32 +27,38 @@ void cout_calc_span(T func, int cycle_num, std::string str) {
 
 int main()
 {
+	using namespace NeuralNetwork;
 	using namespace FastContainer;
 
-	int row = 5;
-	int col = 4;
-	int cycle_num = 1;
+	int input_size = 200;
+	int hidden_size = 100;
+	int output_size = 50;
 
-	auto a = FastMatrix<int>::random(row, col, 1, 10);
+	int row = 50;
+	int col = 20;
+	int cycle_num = 10;
+
+	auto a = FastMatrix<double>::random(row, col, -10, 10);
+	auto b = FastMatrix<double>::random(row, col, -10, 10);
+
+	auto func1 = [&]() {
+		//cout << a.to_string().c_str() << endl;
+		auto result = a.dot(b.reverse());
+		//cout << result.to_string().c_str() << endl;
+	};
+	cout_calc_span(func1, cycle_num, "norm");
 
 	auto func2 = [&]() {
-		cout << a.to_string().c_str() << endl;
-		auto result = a.argmax_by_columns();
-		cout << result.to_string().c_str() << endl;
+		auto result = a.amp_dot(b.amp_reverse());
+		//cout << result.to_string().c_str() << endl;
 	};
-	cout_calc_span(func2, cycle_num, "norm");
+	cout_calc_span(func2, cycle_num, "amp");
 
 	auto func3 = [&]() {
-		auto result = a.amp_argmax_by_columns();
-		cout << result.to_string().c_str() << endl;
+		auto result = a.ppl_dot(b.ppl_reverse());
+		//cout << result.to_string().c_str() << endl;
 	};
-	cout_calc_span(func3, cycle_num, "amp");
-
-	auto func4 = [&]() {
-		auto result = a.ppl_argmax_by_columns();
-		cout << result.to_string().c_str() << endl;
-	};
-	cout_calc_span(func4, cycle_num, "ppl");
+	cout_calc_span(func3, cycle_num, "ppl");
 
 	getchar();
 

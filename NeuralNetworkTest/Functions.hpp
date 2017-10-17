@@ -19,6 +19,7 @@
 
 namespace FastContainer {
 
+	/*—áŠOˆ—*/
 	struct fast_container_exception
 #if ! defined FAST_CONTAINER_NO_EXCEPTION
 		: public std::exception {

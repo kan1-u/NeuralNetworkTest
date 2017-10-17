@@ -8,71 +8,73 @@
 
 namespace NeuralNetwork {
 
-	using namespace std;
-	using namespace FastContainer;
-
 #pragma region Layer
 
+	/*レイヤ基底クラス*/
 	template<typename T>
 	class Layer {
 	public:
-		virtual FastMatrix<T> forward(FastMatrix<T>& target) = 0;
-		virtual FastMatrix<T> backward(FastMatrix<T>& target) = 0;
+		virtual FastContainer::FastMatrix<T> forward(FastContainer::FastMatrix<T>& target) = 0;
+		virtual FastContainer::FastMatrix<T> backward(FastContainer::FastMatrix<T>& target) = 0;
 		virtual void update(T learningRate) = 0;
 	};
 
+	/*シグモイドレイヤ*/
 	template<typename T>
 	class SigmoidLayer :public Layer<T> {
 	public:
-		FastMatrix<T> forward(FastMatrix<T>& target) {
+		FastContainer::FastMatrix<T> forward(FastContainer::FastMatrix<T>& target) {
 			return target.amp_sigmoid();
 		}
-		FastMatrix<T> backward(const FastMatrix<T>& target) {
+		FastContainer::FastMatrix<T> backward(const FastContainer::FastMatrix<T>& target) {
 			return out * (1 - out) * target;
 		}
 		void update(T learningRate) {
 		}
 	private:
-		FastMatrix<T> out;
+		FastContainer::FastMatrix<T> out;
 	};
 
+	/*ReLUレイヤ*/
 	template<typename T>
 	class ReluLayer :public Layer<T> {
 	public:
-		FastMatrix<T> forward(FastMatrix<T>& target) {
+		FastContainer::FastMatrix<T> forward(FastContainer::FastMatrix<T>& target) {
 			mask = target > 0;
 			return target * mask;
 		}
-		FastMatrix<T> backward(FastMatrix<T>& target) {
+		FastContainer::FastMatrix<T> backward(FastContainer::FastMatrix<T>& target) {
 			return target * mask;
 		}
 		void update(T learningRate) {
 		}
 	private:
-		FastMatrix<T> mask;
+		FastContainer::FastMatrix<T> mask;
 	};
 
+	/*Parametric ReLUレイヤ*/
 	template<typename T>
 	class PReluLayer :public Layer<T> {
 	public:
 		PReluLayer(T slope) {
 			this->slope = slope;
 		}
-		FastMatrix<T> forward(FastMatrix<T>& target) {
+		FastContainer::FastMatrix<T> forward(FastContainer::FastMatrix<T>& target) {
 			mask = target > 0;
 			mask = mask + (slope * (mask == 0));
 			return target * mask;
 		}
-		FastMatrix<T> backward(FastMatrix<T>& target) {
+		FastContainer::FastMatrix<T> backward(FastContainer::FastMatrix<T>& target) {
 			return target * mask;
 		}
 		void update(T learningRate) {
 		}
 	private:
-		FastMatrix<T> mask;
+		FastContainer::FastMatrix<T> mask;
 		T slope;
 	};
 
+	/*Randomized Leaky ReLUレイヤ*/
 	template<typename T>
 	class RReluLayer :public Layer<T> {
 	public:
@@ -80,35 +82,36 @@ namespace NeuralNetwork {
 			this->slope_min = slope_min;
 			this->slope_max = slope_max;
 		}
-		FastMatrix<T> forward(FastMatrix<T>& target) {
+		FastContainer::FastMatrix<T> forward(FastContainer::FastMatrix<T>& target) {
 			mask = target > 0;
-			auto rnd = FastMatrix<T>::ppl_random(target.get_rows(), target.get_columns(), slope_min, slope_max);
+			auto rnd = FastContainer::FastMatrix<T>::ppl_random(target.get_rows(), target.get_columns(), slope_min, slope_max);
 			mask = mask + (rnd * (mask == 0));
 			return target * mask;
 		}
-		FastMatrix<T> backward(FastMatrix<T>& target) {
+		FastContainer::FastMatrix<T> backward(FastContainer::FastMatrix<T>& target) {
 			return target * mask;
 		}
 		void update(T learningRate) {
 		}
 	private:
-		FastMatrix<T> mask;
+		FastContainer::FastMatrix<T> mask;
 		T slope_min;
 		T slope_max;
 	};
 
+	/*アフィンレイヤ*/
 	template<typename T>
 	class AffineLayer :public Layer<T> {
 	public:
-		AffineLayer(const FastMatrix<T>& w, const FastVector<T>& b) {
+		AffineLayer(const FastContainer::FastMatrix<T>& w, const FastContainer::FastVector<T>& b) {
 			this->w = w;
 			this->b = b;
 		}
-		FastMatrix<T> forward(FastMatrix<T>& target) {
+		FastContainer::FastMatrix<T> forward(FastContainer::FastMatrix<T>& target) {
 			x = target;
 			return target.amp_dot(w).amp_add_by_rows(b);
 		}
-		FastMatrix<T> backward(FastMatrix<T>& target) {
+		FastContainer::FastMatrix<T> backward(FastContainer::FastMatrix<T>& target) {
 			auto dx = target.amp_dot(w.amp_reverse());
 			dw = x.amp_reverse().amp_dot(target);
 			db = target.amp_sum_by_columns();
@@ -118,42 +121,44 @@ namespace NeuralNetwork {
 			w = w - (learningRate * dw);
 			b = b - (learningRate * db);
 		}
-		FastMatrix<T> getdw() {
+		FastContainer::FastMatrix<T> getdw() {
 			return dw;
 		}
-		FastVector<T> getdb() {
+		FastContainer::FastVector<T> getdb() {
 			return db;
 		}
 	private:
-		FastMatrix<T> w;
-		FastVector<T> b;
-		FastMatrix<T> x;
-		FastMatrix<T> dw;
-		FastVector<T> db;
+		FastContainer::FastMatrix<T> w;
+		FastContainer::FastVector<T> b;
+		FastContainer::FastMatrix<T> x;
+		FastContainer::FastMatrix<T> dw;
+		FastContainer::FastVector<T> db;
 	};
 
 #pragma endregion
 
 #pragma region LastLayer
 
+	/*最終レイヤ基底クラス*/
 	template<typename T>
 	class LastLayer {
 	public:
-		virtual T forward(FastMatrix<T>& target, FastMatrix<T>& teacher) = 0;
-		virtual FastMatrix<T> backward() = 0;
+		virtual T forward(FastContainer::FastMatrix<T>& target, FastContainer::FastMatrix<T>& teacher) = 0;
+		virtual FastContainer::FastMatrix<T> backward() = 0;
 	};
 
+	/*ソフトマックス誤差レイヤ*/
 	template<typename T>
 	class SoftmaxWithLossLayer :public LastLayer<T> {
 	public:
-		T forward(FastMatrix<T>& target, FastMatrix<T>& teacher) {
+		T forward(FastContainer::FastMatrix<T>& target, FastContainer::FastMatrix<T>& teacher) {
 			this->teacher = teacher;
 			out = target.amp_softmax();
 			return out.amp_cross_entropy_error_class(teacher);
 		}
-		FastMatrix<T> backward() {
+		FastContainer::FastMatrix<T> backward() {
 			if (teacher.get_rows() == 1) {
-				out.sub_by_rows(teacher.to_FastVector()) / (-1 * teacher.get_columns());
+				out.sub_by_rows(teacher.to_FastContainer::FastVector()) / (-1 * teacher.get_columns());
 			}
 			else {
 				return (out - teacher) / teacher.get_rows();
@@ -161,20 +166,21 @@ namespace NeuralNetwork {
 		}
 	private:
 		T loss;
-		FastMatrix<T> out;
-		FastMatrix<T> teacher;
+		FastContainer::FastMatrix<T> out;
+		FastContainer::FastMatrix<T> teacher;
 	};
 
 #pragma endregion
 
 #pragma region NeuralNetwork
 
+	/*ニューラルネットワーク*/
 	template<typename T>
-	class NeuralNetwork {
+	class Network {
 	public:
 		std::vector<Layer<T> *> layers;
 		LastLayer<T> *lastLayer;
-		FastMatrix<T> predict(FastMatrix<T>& input) {
+		FastContainer::FastMatrix<T> predict(FastContainer::FastMatrix<T>& input) {
 			auto result = input;
 			for each (auto layer in layers)
 			{
@@ -183,16 +189,16 @@ namespace NeuralNetwork {
 			return result;
 		}
 		template<typename CT>
-		T loss(FastMatrix<T>& input, const CT& teacher) {
+		T loss(FastContainer::FastMatrix<T>& input, const CT& teacher) {
 			auto y = predict(input);
 			return lastLayer->forward(y, teacher);
 		}
-		T accuracy(FastMatrix<T>& input, FastMatrix<T>& teacher) {
+		T accuracy(FastContainer::FastMatrix<T>& input, FastContainer::FastMatrix<T>& teacher) {
 			auto y = predict(input).amp_argmax_by_rows();
 			auto t = teacher.amp_argmax_by_rows();
 			return (y == t).sum() / input.get_rows();
 		}
-		T accuracy(FastMatrix<T>& input, const FastVector<T>& teacher) {
+		T accuracy(FastContainer::FastMatrix<T>& input, const FastContainer::FastVector<T>& teacher) {
 			auto y = predict(input).amp_argmax_by_rows();
 			return (y == teacher).sum() / input.get_rows();
 		}
@@ -209,7 +215,7 @@ namespace NeuralNetwork {
 			}
 		}
 		template<typename CT>
-		void training(FastMatrix<T>& input, const CT& teacher, T learningRate) {
+		void training(FastContainer::FastMatrix<T>& input, const CT& teacher, T learningRate) {
 			loss(input, teacher);
 			set_gradient();
 			update(learningRate);
