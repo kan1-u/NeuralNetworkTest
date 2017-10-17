@@ -30,19 +30,16 @@ int main()
 	using namespace NeuralNetwork;
 	using namespace FastContainer;
 
-	int input_size = 200;
-	int hidden_size = 100;
-	int output_size = 50;
-
-	int row = 50;
-	int col = 20;
+	int row = 300;
+	int col = 200;
 	int cycle_num = 10;
 
 	auto a = FastMatrix<double>::random(row, col, -10, 10);
 	auto b = FastMatrix<double>::random(row, col, -10, 10);
 
+	//cout << a.to_string().c_str() << endl;
+
 	auto func1 = [&]() {
-		//cout << a.to_string().c_str() << endl;
 		auto result = a.dot(b.reverse());
 		//cout << result.to_string().c_str() << endl;
 	};
