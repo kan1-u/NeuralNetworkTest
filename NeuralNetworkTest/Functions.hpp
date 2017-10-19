@@ -43,6 +43,7 @@ namespace FastContainer {
 			return random(mt);
 		}
 		void set_param(T min, T max) {
+			EXCEPTION_CHECK(min <= max, fast_container_exception());
 			mt = std::mt19937(rnd());
 			this->random = std::uniform_real_distribution<>(min, max);
 		}
@@ -50,6 +51,24 @@ namespace FastContainer {
 		std::random_device rnd;
 		std::mt19937 mt;
 		std::uniform_real_distribution<> random;
+	};
+
+	/*min`max‚Ì—” int*/
+	class IntRandom {
+	public:
+		IntRandom(int min = -1, int max = 1) { set_param(min, max); }
+		int generate() {
+			return random(mt);
+		}
+		void set_param(int min, int max) {
+			EXCEPTION_CHECK(min <= max, fast_container_exception());
+			mt = std::mt19937(rnd());
+			this->random = std::uniform_int_distribution<>(min, max);
+		}
+	private:
+		std::random_device rnd;
+		std::mt19937 mt;
+		std::uniform_int_distribution<> random;
 	};
 
 }

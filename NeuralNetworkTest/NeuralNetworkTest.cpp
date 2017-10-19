@@ -7,6 +7,7 @@
 //#define FAST_CONTAINER_NO_EXCEPTION
 
 #include "NeuralNetworkLibrary.hpp"
+#include "MnistDataset.hpp"
 
 #include <chrono>
 #include <iostream>
@@ -29,33 +30,32 @@ int main()
 {
 	using namespace NeuralNetwork;
 	using namespace FastContainer;
+	using namespace MnistDataset;
 
-	int row = 300;
-	int col = 200;
-	int cycle_num = 10;
+	Mnist mnist;
+	auto train_img = FastMatrix<double>(mnist.readTrainingFile("mnist\\train-images.idx3-ubyte"));
+	auto train_lbl = FastVector<double>(mnist.readLabelFile("mnist\\train-labels.idx1-ubyte"));
 
-	auto a = FastMatrix<double>::random(row, col, -10, 10);
-	auto b = FastMatrix<double>::random(row, col, -10, 10);
+	int train_num = 1000;
+	int batch_size = 1000;
+	int input_size = train_img.get_columns();
+	int hidden_size = 50;
+	int output_size = 1;
+	double weight_init = 0.01;
 
-	//cout << a.to_string().c_str() << endl;
+	Network<double> net;
 
-	auto func1 = [&]() {
-		auto result = a.dot(b.reverse());
-		//cout << result.to_string().c_str() << endl;
-	};
-	cout_calc_span(func1, cycle_num, "norm");
+	net.layers.push_back(new AffineLayer<double>(weight_init * FastMatrix<double>::random(input_size, hidden_size), FastVector<double>::random(hidden_size)));
+	net.layers.push_back(new ReluLayer<double>());
+	net.layers.push_back(new AffineLayer<double>(weight_init * FastMatrix<double>::random(hidden_size, output_size), FastVector<double>::random(output_size)));
+	net.lastLayer = new SoftmaxWithLossLayer<double>();
 
-	auto func2 = [&]() {
-		auto result = a.amp_dot(b.amp_reverse());
-		//cout << result.to_string().c_str() << endl;
-	};
-	cout_calc_span(func2, cycle_num, "amp");
-
-	auto func3 = [&]() {
-		auto result = a.ppl_dot(b.ppl_reverse());
-		//cout << result.to_string().c_str() << endl;
-	};
-	cout_calc_span(func3, cycle_num, "ppl");
+	for (int i = 0; i < train_num; i++) {
+		auto mask = FastVector<int>::int_hash_random(batch_size, 0, train_img.get_rows() - 1);
+		auto x_batch = train_img.random_batch(mask);
+		auto t_batch = FastMatrix<double>(train_lbl.random_batch(mask), 1);
+		net.training(x_batch, t_batch, weight_init);
+	}
 
 	getchar();
 

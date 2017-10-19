@@ -40,7 +40,7 @@ namespace NeuralNetwork {
 	class ReluLayer :public Layer<T> {
 	public:
 		FastContainer::FastMatrix<T> forward(FastContainer::FastMatrix<T>& target) {
-			mask = target > 0;
+			mask = target > (T)0;
 			return target * mask;
 		}
 		FastContainer::FastMatrix<T> backward(FastContainer::FastMatrix<T>& target) {
@@ -158,10 +158,10 @@ namespace NeuralNetwork {
 		}
 		FastContainer::FastMatrix<T> backward() {
 			if (teacher.get_rows() == 1) {
-				out.sub_by_rows(teacher.to_FastContainer::FastVector()) / (-1 * teacher.get_columns());
+				return FastContainer::FastMatrix<T>(out.sub_by_rows(teacher.to_FastVector()) / ((T)-1 * teacher.get_columns()));
 			}
 			else {
-				return (out - teacher) / teacher.get_rows();
+				return (out - teacher) / (T)teacher.get_rows();
 			}
 		}
 	private:
@@ -188,8 +188,7 @@ namespace NeuralNetwork {
 			}
 			return result;
 		}
-		template<typename CT>
-		T loss(FastContainer::FastMatrix<T>& input, const CT& teacher) {
+		T loss(FastContainer::FastMatrix<T>& input, FastContainer::FastMatrix<T>& teacher) {
 			auto y = predict(input);
 			return lastLayer->forward(y, teacher);
 		}
@@ -198,7 +197,7 @@ namespace NeuralNetwork {
 			auto t = teacher.amp_argmax_by_rows();
 			return (y == t).sum() / input.get_rows();
 		}
-		T accuracy(FastContainer::FastMatrix<T>& input, const FastContainer::FastVector<T>& teacher) {
+		T accuracy(FastContainer::FastMatrix<T>& input, FastContainer::FastVector<T>& teacher) {
 			auto y = predict(input).amp_argmax_by_rows();
 			return (y == teacher).sum() / input.get_rows();
 		}
@@ -214,8 +213,7 @@ namespace NeuralNetwork {
 				layer->update(learningRate);
 			}
 		}
-		template<typename CT>
-		void training(FastContainer::FastMatrix<T>& input, const CT& teacher, T learningRate) {
+		void training(FastContainer::FastMatrix<T>& input, FastContainer::FastMatrix<T>& teacher, T learningRate) {
 			loss(input, teacher);
 			set_gradient();
 			update(learningRate);

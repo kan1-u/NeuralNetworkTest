@@ -39,12 +39,18 @@
     <ClInclude Include="NeuralNetworkLibrary.hpp">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="MnistDataset.hpp">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="NeuralNetworkTest.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="MnistDataset.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
   </ItemGroup>

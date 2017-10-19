@@ -16,8 +16,15 @@ namespace FastContainer {
 			EXCEPTION_CHECK(size == vec.size(), fast_container_exception());
 			entity = vec;
 		}
+		FastMatrix(FastVector<T> vec, int row_size) {
+			rows = row_size;
+			columns = vec.get_size() / row_size;
+			size = rows * columns;
+			EXCEPTION_CHECK(size == vec.get_size(), fast_container_exception());
+			entity = vec.get_entity();
+		}
 		FastMatrix(std::vector<std::vector<T>> mat) {
-			entity.resize(mat.size(), mat[0].size());
+			resize(mat.size(), mat[0].size());
 			for (int i = 0; i < rows; i++) {
 				EXCEPTION_CHECK(columns == mat[i].size(), fast_container_exception());
 				T offset = i * columns;
@@ -25,7 +32,6 @@ namespace FastContainer {
 					entity[offset + j] = mat[i][j];
 				}
 			}
-			entity = vec;
 		}
 
 		void resize(int row, int col) {
@@ -35,6 +41,7 @@ namespace FastContainer {
 			entity.resize(size);
 		}
 
+		std::vector<T> get_entity() { return entity; }
 		int get_rows() { return rows; }
 		int get_columns() { return columns; }
 		int get_size() { return size; }
@@ -109,6 +116,19 @@ namespace FastContainer {
 			concurrency::parallel_for<int>(0, rows, [&](int i) {
 				result[i] = entity[i * columns + col];
 			});
+			return result;
+		}
+
+		FastMatrix<T> random_batch(FastVector<int> mask) {
+			int row = mask.get_size();
+			FastMatrix<T> result(row, columns);
+			for (int i = 0; i < row; i++) {
+				int r_offset = i * columns;
+				int e_offset = mask[i] * columns;
+				for (int j = 0; j < columns; j++) {
+					result[r_offset + j] = entity[e_offset + j];
+				}
+			}
 			return result;
 		}
 
@@ -1089,47 +1109,47 @@ namespace FastContainer {
 	template<typename T>
 	FastMatrix<T> operator<=(FastMatrix<T>& mat1, FastMatrix<T>& mat2) { return mat1.apply_amp_combo_func([](T x1, T x2) restrict(amp) {return x1 <= x2; }, mat2); }
 
-	template<typename T, typename N>
-	FastMatrix<T> operator+(N val, FastMatrix<T>& mat) { return mat.apply_amp_func([=](T x) restrict(amp) {return val + x; }); }
-	template<typename T, typename N>
-	FastMatrix<T> operator-(N val, FastMatrix<T>& mat) { return mat.apply_amp_func([=](T x) restrict(amp) {return val - x; }); }
-	template<typename T, typename N>
-	FastMatrix<T> operator*(N val, FastMatrix<T>& mat) { return mat.apply_amp_func([=](T x) restrict(amp) {return val * x; }); }
-	template<typename T, typename N>
-	FastMatrix<T> operator/(N val, FastMatrix<T>& mat) { return mat.apply_amp_func([=](T x) restrict(amp) {return val / x; }); }
-	template<typename T, typename N>
-	FastMatrix<T> operator==(N val, FastMatrix<T>& mat) { return mat.apply_amp_func([=](T x) restrict(amp) {return val == x; }); }
-	template<typename T, typename N>
-	FastMatrix<T> operator!=(N val, FastMatrix<T>& mat) { return mat.apply_amp_func([=](T x) restrict(amp) {return val != x; }); }
-	template<typename T, typename N>
-	FastMatrix<T> operator>(N val, FastMatrix<T>& mat) { return mat.apply_amp_func([=](T x) restrict(amp) {return val > x; }); }
-	template<typename T, typename N>
-	FastMatrix<T> operator<(N val, FastMatrix<T>& mat) { return mat.apply_amp_func([=](T x) restrict(amp) {return val < x; }); }
-	template<typename T, typename N>
-	FastMatrix<T> operator>=(N val, FastMatrix<T>& mat) { return mat.apply_amp_func([=](T x) restrict(amp) {return val >= x; }); }
-	template<typename T, typename N>
-	FastMatrix<T> operator<=(N val, FastMatrix<T>& mat) { return mat.apply_amp_func([=](T x) restrict(amp) {return val <= x; }); }
+	template<typename T>
+	FastMatrix<T> operator+(T val, FastMatrix<T>& mat) { return mat.apply_amp_func([=](T x) restrict(amp) {return val + x; }); }
+	template<typename T>
+	FastMatrix<T> operator-(T val, FastMatrix<T>& mat) { return mat.apply_amp_func([=](T x) restrict(amp) {return val - x; }); }
+	template<typename T>
+	FastMatrix<T> operator*(T val, FastMatrix<T>& mat) { return mat.apply_amp_func([=](T x) restrict(amp) {return val * x; }); }
+	template<typename T>
+	FastMatrix<T> operator/(T val, FastMatrix<T>& mat) { return mat.apply_amp_func([=](T x) restrict(amp) {return val / x; }); }
+	template<typename T>
+	FastMatrix<T> operator==(T val, FastMatrix<T>& mat) { return mat.apply_amp_func([=](T x) restrict(amp) {return val == x; }); }
+	template<typename T>
+	FastMatrix<T> operator!=(T val, FastMatrix<T>& mat) { return mat.apply_amp_func([=](T x) restrict(amp) {return val != x; }); }
+	template<typename T>
+	FastMatrix<T> operator>(T val, FastMatrix<T>& mat) { return mat.apply_amp_func([=](T x) restrict(amp) {return val > x; }); }
+	template<typename T>
+	FastMatrix<T> operator<(T val, FastMatrix<T>& mat) { return mat.apply_amp_func([=](T x) restrict(amp) {return val < x; }); }
+	template<typename T>
+	FastMatrix<T> operator>=(T val, FastMatrix<T>& mat) { return mat.apply_amp_func([=](T x) restrict(amp) {return val >= x; }); }
+	template<typename T>
+	FastMatrix<T> operator<=(T val, FastMatrix<T>& mat) { return mat.apply_amp_func([=](T x) restrict(amp) {return val <= x; }); }
 
-	template<typename T, typename N>
-	FastMatrix<T> operator+(FastMatrix<T>& mat, N val) { return mat.apply_amp_func([=](T x) restrict(amp) {return x + val; }); }
-	template<typename T, typename N>
-	FastMatrix<T> operator-(FastMatrix<T>& mat, N val) { return mat.apply_amp_func([=](T x) restrict(amp) {return x - val; }); }
-	template<typename T, typename N>
-	FastMatrix<T> operator*(FastMatrix<T>& mat, N val) { return mat.apply_amp_func([=](T x) restrict(amp) {return x * val; }); }
-	template<typename T, typename N>
-	FastMatrix<T> operator/(FastMatrix<T>& mat, N val) { return mat.apply_amp_func([=](T x) restrict(amp) {return x / val; }); }
-	template<typename T, typename N>
-	FastMatrix<T> operator==(FastMatrix<T>& mat, N val) { return mat.apply_amp_func([=](T x) restrict(amp) {return x == val; }); }
-	template<typename T, typename N>
-	FastMatrix<T> operator!=(FastMatrix<T>& mat, N val) { return mat.apply_amp_func([=](T x) restrict(amp) {return x != val; }); }
-	template<typename T, typename N>
-	FastMatrix<T> operator>(FastMatrix<T>& mat, N val) { return mat.apply_amp_func([=](T x) restrict(amp) {return x > val; }); }
-	template<typename T, typename N>
-	FastMatrix<T> operator<(FastMatrix<T>& mat, N val) { return mat.apply_amp_func([=](T x) restrict(amp) {return x < val; }); }
-	template<typename T, typename N>
-	FastMatrix<T> operator>=(FastMatrix<T>& mat, N val) { return mat.apply_amp_func([=](T x) restrict(amp) {return x >= val; }); }
-	template<typename T, typename N>
-	FastMatrix<T> operator<=(FastMatrix<T>& mat, N val) { return mat.apply_amp_func([=](T x) restrict(amp) {return x <= val; }); }
+	template<typename T>
+	FastMatrix<T> operator+(FastMatrix<T>& mat, T val) { return mat.apply_amp_func([=](T x) restrict(amp) {return x + val; }); }
+	template<typename T>
+	FastMatrix<T> operator-(FastMatrix<T>& mat, T val) { return mat.apply_amp_func([=](T x) restrict(amp) {return x - val; }); }
+	template<typename T>
+	FastMatrix<T> operator*(FastMatrix<T>& mat, T val) { return mat.apply_amp_func([=](T x) restrict(amp) {return x * val; }); }
+	template<typename T>
+	FastMatrix<T> operator/(FastMatrix<T>& mat, T val) { return mat.apply_amp_func([=](T x) restrict(amp) {return x / val; }); }
+	template<typename T>
+	FastMatrix<T> operator==(FastMatrix<T>& mat, T val) { return mat.apply_amp_func([=](T x) restrict(amp) {return x == val; }); }
+	template<typename T>
+	FastMatrix<T> operator!=(FastMatrix<T>& mat, T val) { return mat.apply_amp_func([=](T x) restrict(amp) {return x != val; }); }
+	template<typename T>
+	FastMatrix<T> operator>(FastMatrix<T>& mat, T val) { return mat.apply_amp_func([=](T x) restrict(amp) {return x > val; }); }
+	template<typename T>
+	FastMatrix<T> operator<(FastMatrix<T>& mat, T val) { return mat.apply_amp_func([=](T x) restrict(amp) {return x < val; }); }
+	template<typename T>
+	FastMatrix<T> operator>=(FastMatrix<T>& mat, T val) { return mat.apply_amp_func([=](T x) restrict(amp) {return x >= val; }); }
+	template<typename T>
+	FastMatrix<T> operator<=(FastMatrix<T>& mat, T val) { return mat.apply_amp_func([=](T x) restrict(amp) {return x <= val; }); }
 
 #elif defined FAST_CONTAONER_OPERATOR_OVERLOAD_PPL_MODE
 
@@ -1154,47 +1174,47 @@ namespace FastContainer {
 	template<typename T>
 	FastMatrix<T> operator<=(FastMatrix<T>& mat1, FastMatrix<T>& mat2) { return mat1.apply_ppl_combo_func([](T x1, T x2) {return x1 <= x2; }, mat2); }
 
-	template<typename T, typename N>
-	FastMatrix<T> operator+(N val, FastMatrix<T>& mat) { return mat.apply_ppl_func([=](T x) {return val + x; }); }
-	template<typename T, typename N>
-	FastMatrix<T> operator-(N val, FastMatrix<T>& mat) { return mat.apply_ppl_func([=](T x) {return val - x; }); }
-	template<typename T, typename N>
-	FastMatrix<T> operator*(N val, FastMatrix<T>& mat) { return mat.apply_ppl_func([=](T x) {return val * x; }); }
-	template<typename T, typename N>
-	FastMatrix<T> operator/(N val, FastMatrix<T>& mat) { return mat.apply_ppl_func([=](T x) {return val / x; }); }
-	template<typename T, typename N>
-	FastMatrix<T> operator==(N val, FastMatrix<T>& mat) { return mat.apply_ppl_func([=](T x) {return val == x; }); }
-	template<typename T, typename N>
-	FastMatrix<T> operator!=(N val, FastMatrix<T>& mat) { return mat.apply_ppl_func([=](T x) {return val != x; }); }
-	template<typename T, typename N>
-	FastMatrix<T> operator>(N val, FastMatrix<T>& mat) { return mat.apply_ppl_func([=](T x) {return val > x; }); }
-	template<typename T, typename N>
-	FastMatrix<T> operator<(N val, FastMatrix<T>& mat) { return mat.apply_ppl_func([=](T x) {return val < x; }); }
-	template<typename T, typename N>
-	FastMatrix<T> operator>=(N val, FastMatrix<T>& mat) { return mat.apply_ppl_func([=](T x) {return val >= x; }); }
-	template<typename T, typename N>
-	FastMatrix<T> operator<=(N val, FastMatrix<T>& mat) { return mat.apply_ppl_func([=](T x) {return val <= x; }); }
+	template<typename T>
+	FastMatrix<T> operator+(T val, FastMatrix<T>& mat) { return mat.apply_ppl_func([=](T x) {return val + x; }); }
+	template<typename T>
+	FastMatrix<T> operator-(T val, FastMatrix<T>& mat) { return mat.apply_ppl_func([=](T x) {return val - x; }); }
+	template<typename T>
+	FastMatrix<T> operator*(T val, FastMatrix<T>& mat) { return mat.apply_ppl_func([=](T x) {return val * x; }); }
+	template<typename T>
+	FastMatrix<T> operator/(T val, FastMatrix<T>& mat) { return mat.apply_ppl_func([=](T x) {return val / x; }); }
+	template<typename T>
+	FastMatrix<T> operator==(T val, FastMatrix<T>& mat) { return mat.apply_ppl_func([=](T x) {return val == x; }); }
+	template<typename T>
+	FastMatrix<T> operator!=(T val, FastMatrix<T>& mat) { return mat.apply_ppl_func([=](T x) {return val != x; }); }
+	template<typename T>
+	FastMatrix<T> operator>(T val, FastMatrix<T>& mat) { return mat.apply_ppl_func([=](T x) {return val > x; }); }
+	template<typename T>
+	FastMatrix<T> operator<(T val, FastMatrix<T>& mat) { return mat.apply_ppl_func([=](T x) {return val < x; }); }
+	template<typename T>
+	FastMatrix<T> operator>=(T val, FastMatrix<T>& mat) { return mat.apply_ppl_func([=](T x) {return val >= x; }); }
+	template<typename T>
+	FastMatrix<T> operator<=(T val, FastMatrix<T>& mat) { return mat.apply_ppl_func([=](T x) {return val <= x; }); }
 
-	template<typename T, typename N>
-	FastMatrix<T> operator+(FastMatrix<T>& mat, N val) { return mat.apply_ppl_func([=](T x) {return x + val; }); }
-	template<typename T, typename N>
-	FastMatrix<T> operator-(FastMatrix<T>& mat, N val) { return mat.apply_ppl_func([=](T x) {return x - val; }); }
-	template<typename T, typename N>
-	FastMatrix<T> operator*(FastMatrix<T>& mat, N val) { return mat.apply_ppl_func([=](T x) {return x * val; }); }
-	template<typename T, typename N>
-	FastMatrix<T> operator/(FastMatrix<T>& mat, N val) { return mat.apply_ppl_func([=](T x) {return x / val; }); }
-	template<typename T, typename N>
-	FastMatrix<T> operator==(FastMatrix<T>& mat, N val) { return mat.apply_ppl_func([=](T x) {return x == val; }); }
-	template<typename T, typename N>
-	FastMatrix<T> operator!=(FastMatrix<T>& mat, N val) { return mat.apply_ppl_func([=](T x) {return x != val; }); }
-	template<typename T, typename N>
-	FastMatrix<T> operator>(FastMatrix<T>& mat, N val) { return mat.apply_ppl_func([=](T x) {return x > val; }); }
-	template<typename T, typename N>
-	FastMatrix<T> operator<(FastMatrix<T>& mat, N val) { return mat.apply_ppl_func([=](T x) {return x < val; }); }
-	template<typename T, typename N>
-	FastMatrix<T> operator>=(FastMatrix<T>& mat, N val) { return mat.apply_ppl_func([=](T x) {return x >= val; }); }
-	template<typename T, typename N>
-	FastMatrix<T> operator<=(FastMatrix<T>& mat, N val) { return mat.apply_ppl_func([=](T x) {return x <= val; }); }
+	template<typename T>
+	FastMatrix<T> operator+(FastMatrix<T>& mat, T val) { return mat.apply_ppl_func([=](T x) {return x + val; }); }
+	template<typename T>
+	FastMatrix<T> operator-(FastMatrix<T>& mat, T val) { return mat.apply_ppl_func([=](T x) {return x - val; }); }
+	template<typename T>
+	FastMatrix<T> operator*(FastMatrix<T>& mat, T val) { return mat.apply_ppl_func([=](T x) {return x * val; }); }
+	template<typename T>
+	FastMatrix<T> operator/(FastMatrix<T>& mat, T val) { return mat.apply_ppl_func([=](T x) {return x / val; }); }
+	template<typename T>
+	FastMatrix<T> operator==(FastMatrix<T>& mat, T val) { return mat.apply_ppl_func([=](T x) {return x == val; }); }
+	template<typename T>
+	FastMatrix<T> operator!=(FastMatrix<T>& mat, T val) { return mat.apply_ppl_func([=](T x) {return x != val; }); }
+	template<typename T>
+	FastMatrix<T> operator>(FastMatrix<T>& mat, T val) { return mat.apply_ppl_func([=](T x) {return x > val; }); }
+	template<typename T>
+	FastMatrix<T> operator<(FastMatrix<T>& mat, T val) { return mat.apply_ppl_func([=](T x) {return x < val; }); }
+	template<typename T>
+	FastMatrix<T> operator>=(FastMatrix<T>& mat, T val) { return mat.apply_ppl_func([=](T x) {return x >= val; }); }
+	template<typename T>
+	FastMatrix<T> operator<=(FastMatrix<T>& mat, T val) { return mat.apply_ppl_func([=](T x) {return x <= val; }); }
 
 #else
 
@@ -1221,47 +1241,47 @@ namespace FastContainer {
 	template<typename T>
 	FastMatrix<T> operator<=(FastMatrix<T>& mat1, FastMatrix<T>& mat2) { return mat1.apply_combo_func([](T x1, T x2) {return x1 <= x2; }, mat2); }
 
-	template<typename T, typename N>
-	FastMatrix<T> operator+(N val, FastMatrix<T>& mat) { return mat.apply_func([=](T x) {return val + x; }); }
-	template<typename T, typename N>
-	FastMatrix<T> operator-(N val, FastMatrix<T>& mat) { return mat.apply_func([=](T x) {return val - x; }); }
-	template<typename T, typename N>
-	FastMatrix<T> operator*(N val, FastMatrix<T>& mat) { return mat.apply_func([=](T x) {return val * x; }); }
-	template<typename T, typename N>
-	FastMatrix<T> operator/(N val, FastMatrix<T>& mat) { return mat.apply_func([=](T x) {return val / x; }); }
-	template<typename T, typename N>
-	FastMatrix<T> operator==(N val, FastMatrix<T>& mat) { return mat.apply_func([=](T x) {return val == x; }); }
-	template<typename T, typename N>
-	FastMatrix<T> operator!=(N val, FastMatrix<T>& mat) { return mat.apply_func([=](T x) {return val != x; }); }
-	template<typename T, typename N>
-	FastMatrix<T> operator>(N val, FastMatrix<T>& mat) { return mat.apply_func([=](T x) {return val > x; }); }
-	template<typename T, typename N>
-	FastMatrix<T> operator<(N val, FastMatrix<T>& mat) { return mat.apply_func([=](T x) {return val < x; }); }
-	template<typename T, typename N>
-	FastMatrix<T> operator>=(N val, FastMatrix<T>& mat) { return mat.apply_func([=](T x) {return val >= x; }); }
-	template<typename T, typename N>
-	FastMatrix<T> operator<=(N val, FastMatrix<T>& mat) { return mat.apply_func([=](T x) {return val <= x; }); }
+	template<typename T>
+	FastMatrix<T> operator+(T val, FastMatrix<T>& mat) { return mat.apply_func([=](T x) {return val + x; }); }
+	template<typename T>
+	FastMatrix<T> operator-(T val, FastMatrix<T>& mat) { return mat.apply_func([=](T x) {return val - x; }); }
+	template<typename T>
+	FastMatrix<T> operator*(T val, FastMatrix<T>& mat) { return mat.apply_func([=](T x) {return val * x; }); }
+	template<typename T>
+	FastMatrix<T> operator/(T val, FastMatrix<T>& mat) { return mat.apply_func([=](T x) {return val / x; }); }
+	template<typename T>
+	FastMatrix<T> operator==(T val, FastMatrix<T>& mat) { return mat.apply_func([=](T x) {return val == x; }); }
+	template<typename T>
+	FastMatrix<T> operator!=(T val, FastMatrix<T>& mat) { return mat.apply_func([=](T x) {return val != x; }); }
+	template<typename T>
+	FastMatrix<T> operator>(T val, FastMatrix<T>& mat) { return mat.apply_func([=](T x) {return val > x; }); }
+	template<typename T>
+	FastMatrix<T> operator<(T val, FastMatrix<T>& mat) { return mat.apply_func([=](T x) {return val < x; }); }
+	template<typename T>
+	FastMatrix<T> operator>=(T val, FastMatrix<T>& mat) { return mat.apply_func([=](T x) {return val >= x; }); }
+	template<typename T>
+	FastMatrix<T> operator<=(T val, FastMatrix<T>& mat) { return mat.apply_func([=](T x) {return val <= x; }); }
 
-	template<typename T, typename N>
-	FastMatrix<T> operator+(FastMatrix<T>& mat, N val) { return mat.apply_func([=](T x) {return x + val; }); }
-	template<typename T, typename N>
-	FastMatrix<T> operator-(FastMatrix<T>& mat, N val) { return mat.apply_func([=](T x) {return x - val; }); }
-	template<typename T, typename N>
-	FastMatrix<T> operator*(FastMatrix<T>& mat, N val) { return mat.apply_func([=](T x) {return x * val; }); }
-	template<typename T, typename N>
-	FastMatrix<T> operator/(FastMatrix<T>& mat, N val) { return mat.apply_func([=](T x) {return x / val; }); }
-	template<typename T, typename N>
-	FastMatrix<T> operator==(FastMatrix<T>& mat, N val) { return mat.apply_func([=](T x) {return x == val; }); }
-	template<typename T, typename N>
-	FastMatrix<T> operator!=(FastMatrix<T>& mat, N val) { return mat.apply_func([=](T x) {return x != val; }); }
-	template<typename T, typename N>
-	FastMatrix<T> operator>(FastMatrix<T>& mat, N val) { return mat.apply_func([=](T x) {return x > val; }); }
-	template<typename T, typename N>
-	FastMatrix<T> operator<(FastMatrix<T>& mat, N val) { return mat.apply_func([=](T x) {return x < val; }); }
-	template<typename T, typename N>
-	FastMatrix<T> operator>=(FastMatrix<T>& mat, N val) { return mat.apply_func([=](T x) {return x >= val; }); }
-	template<typename T, typename N>
-	FastMatrix<T> operator<=(FastMatrix<T>& mat, N val) { return mat.apply_func([=](T x) {return x <= val; }); }
+	template<typename T>
+	FastMatrix<T> operator+(FastMatrix<T>& mat, T val) { return mat.apply_func([=](T x) {return x + val; }); }
+	template<typename T>
+	FastMatrix<T> operator-(FastMatrix<T>& mat, T val) { return mat.apply_func([=](T x) {return x - val; }); }
+	template<typename T>
+	FastMatrix<T> operator*(FastMatrix<T>& mat, T val) { return mat.apply_func([=](T x) {return x * val; }); }
+	template<typename T>
+	FastMatrix<T> operator/(FastMatrix<T>& mat, T val) { return mat.apply_func([=](T x) {return x / val; }); }
+	template<typename T>
+	FastMatrix<T> operator==(FastMatrix<T>& mat, T val) { return mat.apply_func([=](T x) {return x == val; }); }
+	template<typename T>
+	FastMatrix<T> operator!=(FastMatrix<T>& mat, T val) { return mat.apply_func([=](T x) {return x != val; }); }
+	template<typename T>
+	FastMatrix<T> operator>(FastMatrix<T>& mat, T val) { return mat.apply_func([=](T x) {return x > val; }); }
+	template<typename T>
+	FastMatrix<T> operator<(FastMatrix<T>& mat, T val) { return mat.apply_func([=](T x) {return x < val; }); }
+	template<typename T>
+	FastMatrix<T> operator>=(FastMatrix<T>& mat, T val) { return mat.apply_func([=](T x) {return x >= val; }); }
+	template<typename T>
+	FastMatrix<T> operator<=(FastMatrix<T>& mat, T val) { return mat.apply_func([=](T x) {return x <= val; }); }
 
 #endif
 
