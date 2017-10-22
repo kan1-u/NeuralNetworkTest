@@ -134,6 +134,24 @@ namespace FastContainer {
 		/*ReLU関数 PPL実装*/
 		FastMatrix<T> relu_ppl() { return apply_ppl_func([](T x) { return x > 0 ? x : 0; }); }
 
+		/*正規化 実装モード切替*/
+		FastMatrix<T> normalization() { return SWITCH_FAST_CONTAONER_FUNCTION(normalization)(); }
+		/*正規化*/
+		FastMatrix<T> normalization_com() {
+			T max = get_max();
+			return apply_com_func([=](T x) { return x / max; });
+		}
+		/*正規化 AMP実装*/
+		FastMatrix<T> normalization_amp() {
+			T max = get_max();
+			return apply_amp_func([=](T x) restrict(amp) { return x / max; });
+		}
+		/*正規化 PPL実装*/
+		FastMatrix<T> normalization_ppl() {
+			T max = get_max();
+			return apply_ppl_func([=](T x) { return x / max; });
+		}
+
 		/*ソフトマックス関数 実装モード切替*/
 		FastMatrix<T> softmax() { return SWITCH_FAST_CONTAONER_FUNCTION(softmax)(); }
 		/*ソフトマックス関数*/
@@ -248,17 +266,17 @@ namespace FastContainer {
 		T cross_entropy_error(FastMatrix<T>& teacher, T delta = 0.0000001) { return SWITCH_FAST_CONTAONER_FUNCTION(cross_entropy_error)(teacher, delta); }
 		/*交差エントロピー誤差*/
 		T cross_entropy_error_com(FastMatrix<T>& teacher, T delta = 0.0000001) {
-			auto buf = apply_com_combo_func([=](T x1, T x2) { return -1 * x2 * std::log(x1 + delta) + (1 - x2) * std::log(1 - x1 + delta); }, teacher);
+			auto buf = apply_com_combo_func([=](T x1, T x2) { return (T)-1 * x2 * std::log(x1 + delta) + (1 - x2) * std::log(1 - x1 + delta); }, teacher);
 			return buf.sum();
 		}
 		/*交差エントロピー誤差 AMP実装*/
 		T cross_entropy_error_amp(FastMatrix<T>& teacher, T delta = 0.0000001) {
-			auto buf = apply_amp_combo_func([=](T x1, T x2) restrict(amp) { return -1 * x2 * concurrency::fast_math::log(x1 + delta) + (1 - x2) * concurrency::fast_math::log(1 - x1 + delta); }, teacher);
+			auto buf = apply_amp_combo_func([=](T x1, T x2) restrict(amp) { return (T)-1 * x2 * concurrency::fast_math::log(x1 + delta) + (1 - x2) * concurrency::fast_math::log(1 - x1 + delta); }, teacher);
 			return buf.sum();
 		}
 		/*交差エントロピー誤差 PPL実装*/
 		T cross_entropy_error_ppl(FastMatrix<T>& teacher, T delta = 0.0000001) {
-			auto buf = apply_ppl_combo_func([=](T x1, T x2) { return -1 * x2 * std::log(x1 + delta) + (1 - x2) * std::log(1 - x1 + delta); }, teacher);
+			auto buf = apply_ppl_combo_func([=](T x1, T x2) { return (T)-1 * x2 * std::log(x1 + delta) + (1 - x2) * std::log(1 - x1 + delta); }, teacher);
 			return buf.sum();
 		}
 
@@ -266,17 +284,17 @@ namespace FastContainer {
 		T cross_entropy_error_class(FastMatrix<T>& teacher, T delta = 0.0000001) { return SWITCH_FAST_CONTAONER_FUNCTION(cross_entropy_error_class)(teacher, delta); }
 		/*交差エントロピー誤差 分類問題*/
 		T cross_entropy_error_class_com(FastMatrix<T>& teacher, T delta = 0.0000001) {
-			auto buf = apply_com_combo_func([=](T x1, T x2) { return -1 * x2 * std::log(x1 + delta); }, teacher);
+			auto buf = apply_com_combo_func([=](T x1, T x2) { return (T)-1 * x2 * std::log(x1 + delta); }, teacher);
 			return buf.sum();
 		}
 		/*交差エントロピー誤差 分類問題 AMP実装*/
 		T cross_entropy_error_class_amp(FastMatrix<T>& teacher, T delta = 0.0000001) {
-			auto buf = apply_amp_combo_func([=](T x1, T x2) restrict(amp) { return -1 * x2 * concurrency::fast_math::log(x1 + delta); }, teacher);
+			auto buf = apply_amp_combo_func([=](T x1, T x2) restrict(amp) { return (T)-1 * x2 * concurrency::fast_math::log(x1 + delta); }, teacher);
 			return buf.sum();
 		}
 		/*交差エントロピー誤差 分類問題 PPL実装*/
 		T cross_entropy_error_class_ppl(FastMatrix<T>& teacher, T delta = 0.0000001) {
-			auto buf = apply_ppl_combo_func([=](T x1, T x2) { return -1 * x2 * std::log(x1 + delta); }, teacher);
+			auto buf = apply_ppl_combo_func([=](T x1, T x2) { return (T)-1 * x2 * std::log(x1 + delta); }, teacher);
 			return buf.sum();
 		}
 

@@ -42,14 +42,14 @@ void neuralnetwork_test() {
 	using fmd = FastMatrix<double>;
 
 	Mnist mnist;
-	auto train_img = fmd(mnist.readTrainingFile("mnist\\train-images.idx3-ubyte"));
-	auto train_lbl = fvd(mnist.readLabelFile("mnist\\train-labels.idx1-ubyte"));
+	auto train_img = fmd(mnist.readTrainingFile("mnist\\train-images.idx3-ubyte")).normalization();
+	auto train_lbl = fmd(mnist.readLabelFileBinaries("mnist\\train-labels.idx1-ubyte"));
 
-	int train_num = 1000;
-	int batch_size = 300;
+	int train_num = 100;
+	int batch_size = 2000;
 	int input_size = train_img.get_column_size();
 	int hidden_size = 50;
-	int output_size = 1;
+	int output_size = train_lbl.get_column_size();
 	double weight_init = 0.01;
 
 	Network<double> net;
@@ -61,8 +61,9 @@ void neuralnetwork_test() {
 
 	for (int i = 0; i < train_num; i++) {
 		auto x_batch = train_img.random_batch_ppl(batch_size);
-		auto t_batch = fmd(train_lbl.random_batch_ppl(batch_size), 1);
+		auto t_batch = train_lbl.random_batch_ppl(batch_size);
 		net.training(x_batch, t_batch, weight_init);
+		cout << net.accuracy(x_batch, t_batch) << endl;
 	}
 }
 
@@ -86,8 +87,8 @@ void fast_container_test() {
 
 int main()
 {
-	fast_container_test();
-	//neuralnetwork_test();
+	//fast_container_test();
+	neuralnetwork_test();
 
 	getchar();
 

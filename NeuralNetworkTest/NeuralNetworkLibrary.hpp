@@ -148,17 +148,18 @@ namespace NeuralNetwork {
 	class SoftmaxWithLossLayer :public LastLayer<T> {
 	public:
 		T forward(FastContainer::FastMatrix<T>& target, FastContainer::FastMatrix<T>& teacher) {
-			this->teacher = teacher;
-			out = target.softmax();
-			return out.cross_entropy_error_class(teacher);
-		}
-		FastContainer::FastMatrix<T> backward() {
-			if (teacher.get_row_size() == 1) {
-				return FastContainer::FastMatrix<T>(out.sub_by_rows_ppl(teacher.to_FastVector()) / ((T)-1 * teacher.get_column_size()));
+			if ((target.get_column_size() == 1) && (teacher.get_row_size() == 1)) {
+				this->teacher = teacher.reverse();
 			}
 			else {
-				return (out - teacher) / (T)teacher.get_row_size();
+				this->teacher = teacher;
 			}
+			out = target.softmax();
+			return out.cross_entropy_error_class(this->teacher);
+		}
+		FastContainer::FastMatrix<T> backward() {
+			if (teacher.get_row_size() == 1) return (out - teacher) / (T)teacher.get_column_size();
+			else return (out - teacher) / (T)teacher.get_row_size();
 		}
 	private:
 		T loss;

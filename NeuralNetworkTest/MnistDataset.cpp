@@ -72,4 +72,29 @@ namespace MnistDataset {
 		return label;
 	}
 
+	vector<vector<double>> Mnist::readLabelFileBinaries(string filename) {
+		ifstream ifs(filename.c_str(), std::ios::in | std::ios::binary);
+		int magic_number = 0;
+		int number_of_images = 0;
+
+		//ヘッダー部より情報を読取る。
+		ifs.read((char*)&magic_number, sizeof(magic_number));
+		magic_number = reverseInt(magic_number);
+		ifs.read((char*)&number_of_images, sizeof(number_of_images));
+		number_of_images = reverseInt(number_of_images);
+
+		vector<vector<double>> label(number_of_images);
+
+		cout << number_of_images << endl;
+
+		for (int i = 0; i < number_of_images; i++) {
+			vector<double> temp(10);
+			char digit;
+			ifs.read((char*)&digit, sizeof(char));
+			temp[digit] = 1.0;
+			label[i] = temp;
+		}
+		return label;
+	}
+
 }

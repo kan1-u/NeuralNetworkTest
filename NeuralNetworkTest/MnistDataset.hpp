@@ -12,6 +12,7 @@ namespace MnistDataset {
 	public:
 		vector<vector<double> > readTrainingFile(string filename);
 		vector<double> readLabelFile(string filename);
+		vector<vector<double>> readLabelFileBinaries(string filename);
 	};
 
 }

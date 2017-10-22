@@ -97,6 +97,24 @@ namespace FastContainer {
 		/*ReLU関数 PPL実装*/
 		FastVector<T> relu_ppl() { return apply_ppl_func([](T x) { return x > 0 ? x : 0; }); }
 
+		/*正規化 実装モード切替*/
+		FastVector<T> normalization() { return SWITCH_FAST_CONTAONER_FUNCTION(normalization)(); }
+		/*正規化*/
+		FastVector<T> normalization_com() {
+			T max = get_max();
+			return apply_com_func([=](T x) { return x / max; });
+		}
+		/*正規化 AMP実装*/
+		FastVector<T> normalization_amp() {
+			T max = get_max();
+			return apply_amp_func([=](T x) restrict(amp) { return x / max; });
+		}
+		/*正規化 PPL実装*/
+		FastVector<T> normalization_ppl() {
+			T max = get_max();
+			return apply_ppl_func([=](T x) { return x / max; });
+		}
+
 		/*ソフトマックス関数 実装モード切替*/
 		FastVector<T> softmax() { return SWITCH_FAST_CONTAONER_FUNCTION(softmax)(); }
 		/*ソフトマックス関数*/
