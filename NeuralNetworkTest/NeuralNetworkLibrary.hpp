@@ -2,10 +2,6 @@
 
 #include "FastContainerLibrary.hpp"
 
-#define FAST_CONTAONER_OPERATOR_OVERLOAD_AMP_MODE
-//#define FAST_CONTAONER_OPERATOR_OVERLOAD_PPL_MODE
-//#define FAST_CONTAONER_OPERATOR_OVERLOAD_NORMAL_MODE
-
 namespace NeuralNetwork {
 
 #pragma region Layer
@@ -24,10 +20,10 @@ namespace NeuralNetwork {
 	class SigmoidLayer :public Layer<T> {
 	public:
 		FastContainer::FastMatrix<T> forward(FastContainer::FastMatrix<T>& target) {
-			return target.amp_sigmoid();
+			return target.sigmoid();
 		}
 		FastContainer::FastMatrix<T> backward(const FastContainer::FastMatrix<T>& target) {
-			return out * (1 - out) * target;
+			return out * ((T)1 - out) * target;
 		}
 		void update(T learningRate) {
 		}
@@ -60,8 +56,8 @@ namespace NeuralNetwork {
 			this->slope = slope;
 		}
 		FastContainer::FastMatrix<T> forward(FastContainer::FastMatrix<T>& target) {
-			mask = target > 0;
-			mask = mask + (slope * (mask == 0));
+			mask = target > (T)0;
+			mask = mask + (slope * (mask == (T)0));
 			return target * mask;
 		}
 		FastContainer::FastMatrix<T> backward(FastContainer::FastMatrix<T>& target) {
@@ -83,9 +79,9 @@ namespace NeuralNetwork {
 			this->slope_max = slope_max;
 		}
 		FastContainer::FastMatrix<T> forward(FastContainer::FastMatrix<T>& target) {
-			mask = target > 0;
-			auto rnd = FastContainer::FastMatrix<T>::ppl_random(target.get_rows(), target.get_columns(), slope_min, slope_max);
-			mask = mask + (rnd * (mask == 0));
+			mask = target > (T)0;
+			auto rnd = FastContainer::FastMatrix<T>::real_random_ppl(target.get_row_size(), target.get_column_size(), slope_min, slope_max);
+			mask = mask + (rnd * (mask == (T)0));
 			return target * mask;
 		}
 		FastContainer::FastMatrix<T> backward(FastContainer::FastMatrix<T>& target) {
@@ -109,22 +105,22 @@ namespace NeuralNetwork {
 		}
 		FastContainer::FastMatrix<T> forward(FastContainer::FastMatrix<T>& target) {
 			x = target;
-			return target.amp_dot(w).amp_add_by_rows(b);
+			return target.dot(w).add_by_rows(b);
 		}
 		FastContainer::FastMatrix<T> backward(FastContainer::FastMatrix<T>& target) {
-			auto dx = target.amp_dot(w.amp_reverse());
-			dw = x.amp_reverse().amp_dot(target);
-			db = target.amp_sum_by_columns();
+			auto dx = target.dot(w.reverse());
+			dw = x.reverse().dot(target);
+			db = target.sum_by_columns();
 			return dx;
 		}
 		void update(T learningRate) {
 			w = w - (learningRate * dw);
 			b = b - (learningRate * db);
 		}
-		FastContainer::FastMatrix<T> getdw() {
+		FastContainer::FastMatrix<T> get_dw() {
 			return dw;
 		}
-		FastContainer::FastVector<T> getdb() {
+		FastContainer::FastVector<T> get_db() {
 			return db;
 		}
 	private:
@@ -153,15 +149,15 @@ namespace NeuralNetwork {
 	public:
 		T forward(FastContainer::FastMatrix<T>& target, FastContainer::FastMatrix<T>& teacher) {
 			this->teacher = teacher;
-			out = target.amp_softmax();
-			return out.amp_cross_entropy_error_class(teacher);
+			out = target.softmax();
+			return out.cross_entropy_error_class(teacher);
 		}
 		FastContainer::FastMatrix<T> backward() {
-			if (teacher.get_rows() == 1) {
-				return FastContainer::FastMatrix<T>(out.sub_by_rows(teacher.to_FastVector()) / ((T)-1 * teacher.get_columns()));
+			if (teacher.get_row_size() == 1) {
+				return FastContainer::FastMatrix<T>(out.sub_by_rows_ppl(teacher.to_FastVector()) / ((T)-1 * teacher.get_column_size()));
 			}
 			else {
-				return (out - teacher) / (T)teacher.get_rows();
+				return (out - teacher) / (T)teacher.get_row_size();
 			}
 		}
 	private:
@@ -193,13 +189,13 @@ namespace NeuralNetwork {
 			return lastLayer->forward(y, teacher);
 		}
 		T accuracy(FastContainer::FastMatrix<T>& input, FastContainer::FastMatrix<T>& teacher) {
-			auto y = predict(input).amp_argmax_by_rows();
-			auto t = teacher.amp_argmax_by_rows();
-			return (y == t).sum() / input.get_rows();
+			auto y = predict(input).argmax_by_rows();
+			auto t = teacher.argmax_by_rows();
+			return (y == t).sum() / input.get_row_size();
 		}
 		T accuracy(FastContainer::FastMatrix<T>& input, FastContainer::FastVector<T>& teacher) {
-			auto y = predict(input).amp_argmax_by_rows();
-			return (y == teacher).sum() / input.get_rows();
+			auto y = predict(input).argmax_by_rows();
+			return (y == teacher).sum() / input.get_row_size();
 		}
 		void set_gradient() {
 			auto out = lastLayer->backward();
