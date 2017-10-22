@@ -44,9 +44,11 @@ void neuralnetwork_test() {
 	Mnist mnist;
 	auto train_img = fmd(mnist.readTrainingFile("mnist\\train-images.idx3-ubyte")).normalization();
 	auto train_lbl = fmd(mnist.readLabelFileBinaries("mnist\\train-labels.idx1-ubyte"));
+	//auto test_img = fmd(mnist.readTrainingFile("mnist\\t10k-images.idx3-ubyte")).normalization();
+	//auto test_lbl = fmd(mnist.readLabelFileBinaries("mnist\\t10k-labels.idx1-ubyte"));
 
 	int train_num = 100;
-	int batch_size = 2000;
+	int batch_size = 10000;
 	int input_size = train_img.get_column_size();
 	int hidden_size = 50;
 	int output_size = train_lbl.get_column_size();
