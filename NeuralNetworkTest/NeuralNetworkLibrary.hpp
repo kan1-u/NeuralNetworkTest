@@ -162,7 +162,6 @@ namespace NeuralNetwork {
 			else return (out - teacher) / (T)teacher.get_row_size();
 		}
 	private:
-		T loss;
 		FastContainer::FastMatrix<T> out;
 		FastContainer::FastMatrix<T> teacher;
 	};
@@ -194,15 +193,13 @@ namespace NeuralNetwork {
 			auto t = teacher.argmax_by_rows();
 			return (y == t).sum() / input.get_row_size();
 		}
-		T accuracy(FastContainer::FastMatrix<T>& input, FastContainer::FastVector<T>& teacher) {
-			auto y = predict(input).argmax_by_rows();
-			return (y == teacher).sum() / input.get_row_size();
-		}
-		void set_gradient() {
+		std::vector<Layer<T> *> gradient(FastContainer::FastMatrix<T>& input, FastContainer::FastMatrix<T>& teacher) {
+			loss(input, teacher);
 			auto out = lastLayer->backward();
 			for (auto it = layers.rbegin(); it != layers.rend(); ++it) {
 				out = (*it)->backward(out);
 			}
+			return layers;
 		}
 		void update(T learningRate) {
 			for each (auto layer in layers)
@@ -211,8 +208,7 @@ namespace NeuralNetwork {
 			}
 		}
 		void training(FastContainer::FastMatrix<T>& input, FastContainer::FastMatrix<T>& teacher, T learningRate) {
-			loss(input, teacher);
-			set_gradient();
+			gradient(input, teacher);
 			update(learningRate);
 		}
 	private:

@@ -392,6 +392,18 @@ namespace FastContainer {
 			IntRandom rnd(min, max);
 			return result.apply_ppl_func([&](int x) { return rnd.generate(); });
 		}
+		/*平均:mean, 標準偏差:sd ランダムなFastVectorを生成*/
+		static FastVector<T> normal_random_com(int size, T mean = 0, T sd = 1) {
+			FastVector<T> result(size);
+			NormalRandom<T> rnd(mean, sd);
+			return result.apply_com_func([&](T x) { return rnd.generate(); });
+		}
+		/*平均:mean, 標準偏差:sd ランダムなFastVectorを生成 PPL実装*/
+		static FastVector<T> normal_random_ppl(int size, T mean = 0, T sd = 1) {
+			FastVector<T> result(size);
+			NormalRandom<T> rnd(mean, sd);
+			return result.apply_ppl_func([&](T x) { return rnd.generate(); });
+		}
 		/*重複のないランダムなFastVector<int>を生成*/
 		static FastVector<int> int_hash_random(int size, int min, int max) {
 			FAST_CONTAINER_EXCEPTION_CHECK(min <= max, fast_container_exception());

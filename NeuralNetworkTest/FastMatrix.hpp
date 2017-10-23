@@ -157,20 +157,20 @@ namespace FastContainer {
 		/*ソフトマックス関数*/
 		FastMatrix<T> softmax_com() {
 			T max = get_max();
-			T total = apply_com_func([=](T x) { return std::exp(x - max); }).sum();
-			return apply_com_func([=](T x) { return std::exp(x - max) / total; });
+			auto buf = apply_com_func([=](T x) { return std::exp(x - max); });
+			return buf.div_by_columns_com(buf.sum_by_rows_com());
 		}
 		/*ソフトマックス関数 AMP実装*/
 		FastMatrix<T> softmax_amp() {
 			T max = get_max();
-			T total = apply_amp_func([=](T x) restrict(amp) { return concurrency::fast_math::exp(x - max); }).sum();
-			return apply_amp_func([=](T x) restrict(amp) { return concurrency::fast_math::exp(x - max) / total; });
+			auto buf = apply_amp_func([=](T x) restrict(amp) { return concurrency::fast_math::exp(x - max); });
+			return buf.div_by_columns_amp(buf.sum_by_rows_amp());
 		}
 		/*ソフトマックス関数 PPL実装*/
 		FastMatrix<T> softmax_ppl() {
 			T max = get_max();
-			T total = apply_ppl_func([=](T x) { return std::exp(x - max); }).sum();
-			return apply_ppl_func([=](T x) { return std::exp(x - max) / total; });
+			auto buf = apply_ppl_func([=](T x) { return std::exp(x - max); });
+			return buf.div_by_columns_ppl(buf.sum_by_rows_ppl());
 		}
 
 		/*数値微分 実装モード切替
@@ -285,17 +285,17 @@ namespace FastContainer {
 		/*交差エントロピー誤差 分類問題*/
 		T cross_entropy_error_class_com(FastMatrix<T>& teacher, T delta = 0.0000001) {
 			auto buf = apply_com_combo_func([=](T x1, T x2) { return (T)-1 * x2 * std::log(x1 + delta); }, teacher);
-			return buf.sum();
+			return buf.sum() / row_size;
 		}
 		/*交差エントロピー誤差 分類問題 AMP実装*/
 		T cross_entropy_error_class_amp(FastMatrix<T>& teacher, T delta = 0.0000001) {
 			auto buf = apply_amp_combo_func([=](T x1, T x2) restrict(amp) { return (T)-1 * x2 * concurrency::fast_math::log(x1 + delta); }, teacher);
-			return buf.sum();
+			return buf.sum() / row_size;
 		}
 		/*交差エントロピー誤差 分類問題 PPL実装*/
 		T cross_entropy_error_class_ppl(FastMatrix<T>& teacher, T delta = 0.0000001) {
 			auto buf = apply_ppl_combo_func([=](T x1, T x2) { return (T)-1 * x2 * std::log(x1 + delta); }, teacher);
-			return buf.sum();
+			return buf.sum() / row_size;
 		}
 
 		/*最小値*/
@@ -802,15 +802,15 @@ namespace FastContainer {
 		/*内積*/
 		FastMatrix<T> dot_com(FastMatrix<T>& mat) {
 			FAST_CONTAINER_EXCEPTION_CHECK(column_size == mat.get_row_size(), fast_container_exception());
-			int col = mat.get_column_size();
-			FastMatrix<T> result(row_size, col);
+			int mat_col = mat.get_column_size();
+			FastMatrix<T> result(row_size, mat_col);
 			for (int i = 0; i < row_size; i++) {
-				int ent_offset = i * column_size;
-				int res_offset = i * col;
-				for (int j = 0; j < col; j++) {
-					int res_pos = res_offset + j;
-					for (int k = 0; k < column_size; k++) {
-						result[res_pos] += entity[ent_offset + k] * mat(k, j);
+				int res_offset = i * mat_col;
+				int ent_pos = i * column_size;
+				int mat_offset = 0;
+				for (int k = 0; k < column_size; k++, ent_pos++, mat_offset += mat_col) {
+					for (int j = 0; j < mat_col; j++) {
+						result[res_offset + j] += entity[ent_pos] * mat[mat_offset + j];
 					}
 				}
 			}
@@ -837,15 +837,16 @@ namespace FastContainer {
 		/*内積 PPL実装*/
 		FastMatrix<T> dot_ppl(FastMatrix<T>& mat) {
 			FAST_CONTAINER_EXCEPTION_CHECK(column_size == mat.get_row_size(), fast_container_exception());
-			int col = mat.get_column_size();
-			int mid = column_size;
-			int size = row_size * col;
-			FastMatrix<T> result(row_size, col);
-			concurrency::parallel_for<int>(0, size, [&](int i) {
-				int offset = (i / col) * column_size;
-				int mat_col = i % col;
-				for (int j = 0; j < mid; j++) {
-					result[i] += entity[offset + j] * mat(j, mat_col);
+			int mat_col = mat.get_column_size();
+			FastMatrix<T> result(row_size, mat_col);
+			concurrency::parallel_for<int>(0, row_size, [&](int i) {
+				int res_offset = i * mat_col;
+				int ent_pos = i * column_size;
+				int mat_offset = 0;
+				for (int k = 0; k < column_size; k++, ent_pos++, mat_offset += mat_col) {
+					for (int j = 0; j < mat_col; j++) {
+						result[res_offset + j] += entity[ent_pos] * mat[mat_offset + j];
+					}
 				}
 			});
 			return result;
@@ -1191,13 +1192,25 @@ namespace FastContainer {
 		static FastMatrix<int> int_random_com(int row, int col, int min = -1, int max = 1) {
 			FastMatrix<int> result(row, col);
 			IntRandom rnd(min, max);
-			return result.apply_com_func([&](T x) { return rnd.generate(); });
+			return result.apply_com_func([&](int x) { return rnd.generate(); });
 		}
 		/*ランダムなFastMatrix<int>を生成 PPL実装*/
 		static FastMatrix<int> int_random_ppl(int row, int col, int min = -1, int max = 1) {
 			FastMatrix<int> result(row, col);
 			IntRandom rnd(min, max);
 			return result.apply_ppl_func([&](int x) { return rnd.generate(); });
+		}
+		/*平均:mean, 標準偏差:sd のランダムなFastMatrixを生成*/
+		static FastMatrix<T> normal_random_com(int row, int col, T mean = 0, T sd = 1) {
+			FastMatrix<T> result(row, col);
+			NormalRandom<T> rnd(mean, sd);
+			return result.apply_com_func([&](T x) { return rnd.generate(); });
+		}
+		/*平均:mean, 標準偏差:sd ランダムなFastMatrixを生成 PPL実装*/
+		static FastMatrix<T> normal_random_ppl(int row, int col, T mean = 0, T sd = 1) {
+			FastMatrix<T> result(row, col);
+			NormalRandom<T> rnd(mean, sd);
+			return result.apply_ppl_func([&](T x) { return rnd.generate(); });
 		}
 
 	private:

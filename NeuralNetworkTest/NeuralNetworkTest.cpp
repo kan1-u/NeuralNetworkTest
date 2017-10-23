@@ -44,47 +44,59 @@ void neuralnetwork_test() {
 	Mnist mnist;
 	auto train_img = fmd(mnist.readTrainingFile("mnist\\train-images.idx3-ubyte")).normalization();
 	auto train_lbl = fmd(mnist.readLabelFileBinaries("mnist\\train-labels.idx1-ubyte"));
-	//auto test_img = fmd(mnist.readTrainingFile("mnist\\t10k-images.idx3-ubyte")).normalization();
-	//auto test_lbl = fmd(mnist.readLabelFileBinaries("mnist\\t10k-labels.idx1-ubyte"));
+	auto test_img = fmd(mnist.readTrainingFile("mnist\\t10k-images.idx3-ubyte")).normalization();
+	auto test_lbl = fmd(mnist.readLabelFileBinaries("mnist\\t10k-labels.idx1-ubyte"));
 
 	int train_num = 100;
-	int batch_size = 10000;
+	int batch_size = 1000;
+	int tbatch_size = 100;
 	int input_size = train_img.get_column_size();
 	int hidden_size = 50;
 	int output_size = train_lbl.get_column_size();
-	double weight_init = 0.01;
+	double weight_init = 0.05;
 
 	Network<double> net;
 
-	net.layers.push_back(new AffineLayer<double>(weight_init * fmd::real_random_ppl(input_size, hidden_size), fvd::real_random_ppl(hidden_size)));
-	net.layers.push_back(new ReluLayer<double>());
-	net.layers.push_back(new AffineLayer<double>(weight_init * fmd::real_random_ppl(hidden_size, output_size), fvd::real_random_ppl(output_size)));
+	net.layers.push_back(new AffineLayer<double>(weight_init * fmd::normal_random_ppl(input_size, hidden_size), weight_init * fvd::real_random_ppl(hidden_size)));
+	net.layers.push_back(new RReluLayer<double>(0.01, 0.05));
+	net.layers.push_back(new AffineLayer<double>(weight_init * fmd::normal_random_ppl(hidden_size, output_size), weight_init * fvd::real_random_ppl(output_size)));
 	net.lastLayer = new SoftmaxWithLossLayer<double>();
 
 	for (int i = 0; i < train_num; i++) {
-		auto x_batch = train_img.random_batch_ppl(batch_size);
-		auto t_batch = train_lbl.random_batch_ppl(batch_size);
+		auto mask = fvd::int_hash_random(batch_size, 0, train_img.get_row_size() - 1);
+		auto x_batch = train_img.batch(mask);
+		auto t_batch = train_lbl.batch(mask);
+		auto tmask = fvd::int_hash_random(tbatch_size, 0, test_img.get_row_size() - 1);
+		auto tx_batch = test_img.batch(tmask);
+		auto tt_batch = test_lbl.batch(tmask);
 		net.training(x_batch, t_batch, weight_init);
-		cout << net.accuracy(x_batch, t_batch) << endl;
+		//cout << "loss:" << net.loss(x_batch, t_batch) << endl;
+		cout << to_string(i).c_str() << ".train acc: " << net.accuracy(x_batch, t_batch) << endl;
+		cout << to_string(i).c_str() << ".test  acc: " << net.accuracy(tx_batch, tt_batch) << endl;
 	}
 }
 
 void fast_container_test() {
-	auto x1 = FastMatrix<double>::real_random_ppl(5, 3);
-	auto x2 = FastMatrix<double>::real_random_ppl(5, 3);
-	auto y1 = x1.random_batch_com(3);
-	auto y2 = x1.random_batch_amp(3);
-	auto y3 = x1.random_batch_ppl(3);
-	auto y4 = x1.random_batch(3);
-	auto y5 = (2.0 + (2.0 - (2.0 * (2.0 / ((((((((x1 + x2) - x2) * x2) / x2) + 2.0) - 2.0) * 2.0) / 2.0)))));
+	auto x1 = FastMatrix<double>::int_random_ppl(3000, 700, 0, 9);
+	auto x2 = FastMatrix<double>::int_random_ppl(700, 50, 0, 9);
 
-	cout << x1.to_string().c_str() << endl;
-	cout << x2.to_string().c_str() << endl;
-	cout << y1.to_string().c_str() << endl;
-	cout << y2.to_string().c_str() << endl;
-	cout << y3.to_string().c_str() << endl;
-	cout << y4.to_string().c_str() << endl;
-	cout << y5.to_string().c_str() << endl;
+	//cout << x1.to_string().c_str() << endl;
+	//cout << x2.to_string().c_str() << endl;
+	auto func1 = [&]() {
+		auto y = x1.dot_com(x2);
+		cout << y.to_string().c_str() << endl;
+	};
+	auto func2 = [&]() {
+		auto y = x1.dot_amp(x2);
+		cout << y.to_string().c_str() << endl;
+	};
+	auto func3 = [&]() {
+		auto y = x1.dot_ppl(x2);
+		cout << y.to_string().c_str() << endl;
+	};
+	//cout_calc_span(func1, 1, "com");
+	cout_calc_span(func2, 1, "amp");
+	cout_calc_span(func3, 1, "ppl");
 }
 
 int main()

@@ -71,4 +71,22 @@ namespace FastContainer {
 		std::uniform_int_distribution<> random;
 	};
 
+	/*•½‹Ï:mean, •W€•Î·:sd ‚Ì—”*/
+	template<typename T>
+	class NormalRandom {
+	public:
+		NormalRandom(T mean = 0, T sd = 1) { set_param(mean, sd); }
+		T generate() {
+			return random(mt);
+		}
+		void set_param(T mean, T sd) {
+			mt = std::mt19937(rnd());
+			this->random = std::normal_distribution<>(mean, sd);
+		}
+	private:
+		std::random_device rnd;
+		std::mt19937 mt;
+		std::normal_distribution<> random;
+	};
+
 }
