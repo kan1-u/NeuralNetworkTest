@@ -77,32 +77,70 @@ void neuralnetwork_test() {
 }
 
 void fast_container_test() {
-	auto x1 = FastMatrix<double>::int_random_ppl(3000, 700, 0, 9);
-	auto x2 = FastMatrix<double>::int_random_ppl(700, 50, 0, 9);
+	auto x1 = FastMatrix<double>::real_random_ppl(1000, 500);
+	auto x2 = FastMatrix<double>::real_random_ppl(500, 50);
 
 	//cout << x1.to_string().c_str() << endl;
 	//cout << x2.to_string().c_str() << endl;
-	auto func1 = [&]() {
-		auto y = x1.dot_com(x2);
-		cout << y.to_string().c_str() << endl;
-	};
-	auto func2 = [&]() {
-		auto y = x1.dot_amp(x2);
-		cout << y.to_string().c_str() << endl;
-	};
-	auto func3 = [&]() {
-		auto y = x1.dot_ppl(x2);
-		cout << y.to_string().c_str() << endl;
-	};
+	//auto func1 = [&]() {
+	//	auto y = x1.dot_com(x2);
+	//	cout << y.to_string().c_str() << endl;
+	//};
+	//auto func2 = [&]() {
+	//	auto y = x1.dot_amp(x2);
+	//	cout << y.to_string().c_str() << endl;
+	//};
+	//auto func3 = [&]() {
+	//	auto y = x1.dot_ppl(x2);
+	//	cout << y.to_string().c_str() << endl;
+	//};
+
+	auto y1 = x1.dot_com(x2);
+	auto y2 = x1.dot_amp(x2);
+	auto y3 = x1.dot_ppl(x2);
+
+	//cout << "com: " << y1.to_string().c_str() << endl << endl;
+	//cout << "amp: " << y2.to_string().c_str() << endl << endl;
+	//cout << "ppl: " << y3.to_string().c_str() << endl << endl;
+	cout << "com != amp: " << (y1 - y2).abs_com().sum() << endl;
+	cout << "amp != ppl: " << (y2 - y3).abs_com().sum() << endl;
+	cout << "com != ppl: " << (y1 - y3).abs_com().sum() << endl;
+
 	//cout_calc_span(func1, 1, "com");
-	cout_calc_span(func2, 1, "amp");
-	cout_calc_span(func3, 1, "ppl");
+	//cout_calc_span(func2, 1, "amp");
+	//cout_calc_span(func3, 1, "ppl");
+}
+
+void show_accelerator() {
+	using  concurrency::accelerator;
+	using  std::cout;
+	using  std::cin;
+	using  std::wcout;
+
+	vector<accelerator> allAccl = accelerator::get_all();
+	vector<accelerator> validAccl;
+
+	int numAcs = allAccl.size();
+
+	for (int i = 0; i<numAcs; i++)
+	{
+		if (!allAccl[i].is_emulated)
+		{
+			validAccl.push_back(allAccl[i]);
+		}
+	}
+
+	for (int i = 0; i < validAccl.size(); i++)
+	{
+		wcout << i << " : " << validAccl[i].get_description() << endl;
+	}
 }
 
 int main()
 {
 	//fast_container_test();
 	neuralnetwork_test();
+	//show_accelerator();
 
 	getchar();
 

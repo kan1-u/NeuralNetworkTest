@@ -43,6 +43,8 @@ FastContainerクラスの演算子オーバーライドの実装モードを切替
 #include <amp.h>
 #include <amp_math.h>
 #include <ppl.h>
+#include <iomanip>
+#include <sstream>
 
 #include "Functions.hpp"
 #include "FastVector.hpp"

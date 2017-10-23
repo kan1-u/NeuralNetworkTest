@@ -827,6 +827,7 @@ namespace FastContainer {
 			concurrency::array_view<T, 2> av_result(row_size, col, &result[0]);
 			av_result.discard_data();
 			concurrency::parallel_for_each(av_result.extent, [=](concurrency::index<2> idx) restrict(amp) {
+				av_result[idx] = 0;
 				for (int i = 0; i < mid; i++) {
 					av_result[idx] += av_entity[idx[0]][i] * av_mat[i][idx[1]];
 				}
@@ -1162,18 +1163,19 @@ namespace FastContainer {
 
 		/*[row,column] ((values1),(values2),...)*/
 		std::string to_string() {
-			std::string result = "[" + std::to_string(row_size) + "," + std::to_string(column_size) + "](";
+			std::ostringstream stream;
+			stream << "[" << row_size << ", " << column_size << "](";
 			for (int i = 0; i < row_size; i++) {
-				if (i) result += ",(";
-				else result += "(";
+				if (i) stream << ",(";
+				else stream << "(";
 				for (int j = 0; j < column_size; j++) {
-					if (j) result += "," + std::to_string(entity[i * column_size + j]);
-					else result += std::to_string(entity[i * column_size + j]);
+					if (j) stream << ", " << entity[i * column_size + j];
+					else stream << entity[i * column_size + j];
 				}
-				result += ")";
+				stream << ")";
 			}
-			result += ")";
-			return result;
+			stream << ")";
+			return stream.str();
 		}
 
 		/*ƒ‰ƒ“ƒ_ƒ€‚ÈFastMatrix‚ð¶¬*/
@@ -1218,6 +1220,7 @@ namespace FastContainer {
 		int row_size;
 		int column_size;
 		int size;
+
 	};
 
 
