@@ -4,12 +4,12 @@
 #include "stdafx.h"
 
 //#define FAST_CONTAONER_FUNCTIONS_COM_MODE
-//#define FAST_CONTAONER_FUNCTIONS_AMP_MODE
-#define FAST_CONTAONER_FUNCTIONS_PPL_MODE
+#define FAST_CONTAONER_FUNCTIONS_AMP_MODE
+//#define FAST_CONTAONER_FUNCTIONS_PPL_MODE
 
 //#define FAST_CONTAONER_OPERATOR_OVERLOAD_COM_MODE
-//#define FAST_CONTAONER_OPERATOR_OVERLOAD_AMP_MODE
-#define FAST_CONTAONER_OPERATOR_OVERLOAD_PPL_MODE
+#define FAST_CONTAONER_OPERATOR_OVERLOAD_AMP_MODE
+//#define FAST_CONTAONER_OPERATOR_OVERLOAD_PPL_MODE
 
 //#define FAST_CONTAINER_NO_EXCEPTION
 
@@ -57,9 +57,9 @@ void neuralnetwork_test() {
 
 	Network<double> net;
 
-	net.layers.push_back(new AffineLayer<double>(weight_init * fmd::normal_random_ppl(input_size, hidden_size), weight_init * fvd::real_random_ppl(hidden_size)));
-	net.layers.push_back(new RReluLayer<double>(0.01, 0.05));
-	net.layers.push_back(new AffineLayer<double>(weight_init * fmd::normal_random_ppl(hidden_size, output_size), weight_init * fvd::real_random_ppl(output_size)));
+	net.layers.push_back(new AffineLayer<double>(weight_init * fmd::normal_random_ppl(input_size, hidden_size), fvd(hidden_size)));
+	net.layers.push_back(new ReluLayer<double>());
+	net.layers.push_back(new AffineLayer<double>(weight_init * fmd::normal_random_ppl(hidden_size, output_size), fvd(output_size)));
 	net.lastLayer = new SoftmaxWithLossLayer<double>();
 
 	for (int i = 0; i < train_num; i++) {
@@ -111,36 +111,10 @@ void fast_container_test() {
 	//cout_calc_span(func3, 1, "ppl");
 }
 
-void show_accelerator() {
-	using  concurrency::accelerator;
-	using  std::cout;
-	using  std::cin;
-	using  std::wcout;
-
-	vector<accelerator> allAccl = accelerator::get_all();
-	vector<accelerator> validAccl;
-
-	int numAcs = allAccl.size();
-
-	for (int i = 0; i<numAcs; i++)
-	{
-		if (!allAccl[i].is_emulated)
-		{
-			validAccl.push_back(allAccl[i]);
-		}
-	}
-
-	for (int i = 0; i < validAccl.size(); i++)
-	{
-		wcout << i << " : " << validAccl[i].get_description() << endl;
-	}
-}
-
 int main()
 {
 	//fast_container_test();
 	neuralnetwork_test();
-	//show_accelerator();
 
 	getchar();
 

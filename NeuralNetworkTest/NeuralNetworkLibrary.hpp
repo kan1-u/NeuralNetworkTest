@@ -105,11 +105,11 @@ namespace NeuralNetwork {
 		}
 		FastContainer::FastMatrix<T> forward(FastContainer::FastMatrix<T>& target) {
 			x = target;
-			return target.dot_amp(w).add_by_rows(b);
+			return target.dot(w).add_by_rows(b);
 		}
 		FastContainer::FastMatrix<T> backward(FastContainer::FastMatrix<T>& target) {
-			auto dx = target.dot_amp(w.reverse());
-			dw = x.reverse().dot_amp(target);
+			auto dx = target.dot(w.reverse());
+			dw = x.reverse().dot(target);
 			db = target.sum_by_columns();
 			return dx;
 		}

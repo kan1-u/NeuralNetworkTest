@@ -359,13 +359,14 @@ namespace FastContainer {
 
 		/*[size] (value1,value2,...)*/
 		std::string to_string() {
-			std::string result = "[" + std::to_string(size) + "](";
+			std::ostringstream stream;
+			stream << "[" << size << "](";
 			for (int i = 0; i < size; i++) {
-				if (i) result += "," + std::to_string(entity[i]);
-				else result += std::to_string(entity[i]);
+				if (i) stream << "," << entity[i];
+				else stream << entity[i];
 			}
-			result += ")";
-			return result;
+			stream << ")";
+			return stream.str();
 		}
 
 		/*ƒ‰ƒ“ƒ_ƒ€‚ÈFastVector‚ð¶¬*/
