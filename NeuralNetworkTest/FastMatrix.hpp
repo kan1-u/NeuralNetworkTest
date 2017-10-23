@@ -553,6 +553,7 @@ namespace FastContainer {
 			int b_col = column_size;
 			av_result.discard_data();
 			concurrency::parallel_for_each(av_result.extent, [=](concurrency::index<1> idx) restrict(amp) {
+				av_result[idx] = 0;
 				T max = av_entity[idx[0]][0];
 				for (int i = 0; i < b_col; i++) {
 					T b_entity = av_entity[idx[0]][i];
@@ -607,6 +608,7 @@ namespace FastContainer {
 			int b_row = row_size;
 			av_result.discard_data();
 			concurrency::parallel_for_each(av_result.extent, [=](concurrency::index<1> idx) restrict(amp) {
+				av_result[idx] = 0;
 				T max = av_entity[0][idx[0]];
 				for (int i = 0; i < b_row; i++) {
 					T b_entity = av_entity[i][idx[0]];
@@ -656,6 +658,7 @@ namespace FastContainer {
 			int b_col = column_size;
 			av_result.discard_data();
 			concurrency::parallel_for_each(av_result.extent, [=](concurrency::index<1> idx) restrict(amp) {
+				av_result[idx] = 0;
 				for (int i = 0; i < b_col; i++) {
 					av_result[idx] += av_entity[idx[0]][i];
 				}
@@ -695,6 +698,7 @@ namespace FastContainer {
 			int b_row = row_size;
 			av_result.discard_data();
 			concurrency::parallel_for_each(av_result.extent, [=](concurrency::index<1> idx) restrict(amp) {
+				av_result[idx] = 0;
 				for (int i = 0; i < b_row; i++) {
 					av_result[idx] += av_entity[i][idx[0]];
 				}
@@ -735,6 +739,7 @@ namespace FastContainer {
 			int b_col = column_size;
 			av_result.discard_data();
 			concurrency::parallel_for_each(av_result.extent, [=](concurrency::index<1> idx) restrict(amp) {
+				av_result[idx] = 0;
 				for (int i = 0; i < b_col; i++) {
 					av_result[idx] += av_entity[idx[0]][i];
 				}
@@ -777,6 +782,7 @@ namespace FastContainer {
 			int b_row = row_size;
 			av_result.discard_data();
 			concurrency::parallel_for_each(av_result.extent, [=](concurrency::index<1> idx) restrict(amp) {
+				av_result[idx] = 0;
 				for (int i = 0; i < b_row; i++) {
 					av_result[idx] += av_entity[i][idx[0]];
 				}

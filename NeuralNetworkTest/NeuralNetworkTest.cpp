@@ -4,12 +4,12 @@
 #include "stdafx.h"
 
 //#define FAST_CONTAONER_FUNCTIONS_COM_MODE
-#define FAST_CONTAONER_FUNCTIONS_AMP_MODE
-//#define FAST_CONTAONER_FUNCTIONS_PPL_MODE
+//#define FAST_CONTAONER_FUNCTIONS_AMP_MODE
+#define FAST_CONTAONER_FUNCTIONS_PPL_MODE
 
 //#define FAST_CONTAONER_OPERATOR_OVERLOAD_COM_MODE
-#define FAST_CONTAONER_OPERATOR_OVERLOAD_AMP_MODE
-//#define FAST_CONTAONER_OPERATOR_OVERLOAD_PPL_MODE
+//#define FAST_CONTAONER_OPERATOR_OVERLOAD_AMP_MODE
+#define FAST_CONTAONER_OPERATOR_OVERLOAD_PPL_MODE
 
 //#define FAST_CONTAINER_NO_EXCEPTION
 
@@ -43,9 +43,9 @@ void neuralnetwork_test() {
 
 	Mnist mnist;
 	auto train_img = fmd(mnist.readTrainingFile("mnist\\train-images.idx3-ubyte")).normalization();
-	auto train_lbl = fmd(mnist.readLabelFileBinaries("mnist\\train-labels.idx1-ubyte"));
+	auto train_lbl = fmd(mnist.readLabelFileOneHot("mnist\\train-labels.idx1-ubyte"));
 	auto test_img = fmd(mnist.readTrainingFile("mnist\\t10k-images.idx3-ubyte")).normalization();
-	auto test_lbl = fmd(mnist.readLabelFileBinaries("mnist\\t10k-labels.idx1-ubyte"));
+	auto test_lbl = fmd(mnist.readLabelFileOneHot("mnist\\t10k-labels.idx1-ubyte"));
 
 	int train_num = 100;
 	int batch_size = 1000;

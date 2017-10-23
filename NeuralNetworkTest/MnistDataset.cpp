@@ -72,7 +72,7 @@ namespace MnistDataset {
 		return label;
 	}
 
-	vector<vector<double>> Mnist::readLabelFileBinaries(string filename) {
+	vector<vector<double>> Mnist::readLabelFileOneHot(string filename) {
 		ifstream ifs(filename.c_str(), std::ios::in | std::ios::binary);
 		int magic_number = 0;
 		int number_of_images = 0;
