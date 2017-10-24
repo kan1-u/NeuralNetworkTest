@@ -22,6 +22,11 @@ namespace FastContainer {
 
 		T& operator[](int index) { return entity[index]; }
 
+		auto begin() { return entity.begin(); }
+		auto begin() const { return entity.begin(); }
+		auto end() { return entity.end(); }
+		auto end() const { return entity.end(); }
+
 		/*そのまま返す*/
 		FastVector<T> identity() { return this; }
 
@@ -213,14 +218,12 @@ namespace FastContainer {
 			}
 			return result;
 		}
-
 		/*合計*/
 		T sum() {
 			T result = 0;
 			for (auto x : entity) result += x;
 			return result;
 		}
-
 		/*平均*/
 		T mean() {
 			return sum() / size;
@@ -236,14 +239,85 @@ namespace FastContainer {
 			return result;
 		}
 
+		/*[0]～[size]までを取得 実装モード切替*/
+		FastVector<T> take(int size) { return SWITCH_FAST_CONTAONER_FUNCTION(take)(size); }
+		/*[0]～[size]までを取得*/
+		FastVector<T> take_com(int size) {
+			FAST_CONTAINER_EXCEPTION_CHECK(size <= this->size, fast_container_exception());
+			FastVector<T> result(size);
+			for (int i = 0; i < size; i++) {
+				result[i] = entity[i];
+			}
+			return result;
+		}
+		/*[0]～[size]までを取得 AMP実装*/
+		FastVector<T> take_amp(int size) {
+			FAST_CONTAINER_EXCEPTION_CHECK(size <= this->size, fast_container_exception());
+			FastVector<T> result(size);
+			concurrency::array_view<const T, 1> av_entity(this->size, &entity[0]);
+			concurrency::array_view<T, 1> av_result(size, &result[0]);
+			av_result.discard_data();
+			concurrency::parallel_for_each(av_result.extent, [=](concurrency::index<1> idx) restrict(amp) {
+				av_result[idx] = av_entity[idx];
+			});
+			av_result.synchronize();
+			return result;
+		}
+		/*[0]～[size]までを取得 PPL実装*/
+		FastVector<T> take_ppl(int size) {
+			FAST_CONTAINER_EXCEPTION_CHECK(size <= this->size, fast_container_exception());
+			FastVector<T> result(size);
+			concurrency::parallel_for<int>(0, size, [&](int i) {
+				result[i] = entity[i];
+			});
+			return result;
+		}
+
+		/*[size]～[end]までを取得 実装モード切替*/
+		FastVector<T> skip(int size) { return SWITCH_FAST_CONTAONER_FUNCTION(skip)(size); }
+		/*[size]～[end]までを取得*/
+		FastVector<T> skip_com(int size) {
+			FAST_CONTAINER_EXCEPTION_CHECK(size < this->size, fast_container_exception());
+			int res_size = this->size - size;
+			FastVector<T> result(res_size);
+			for (int i = 0; i < res_size; i++) {
+				result[i] = entity[size + i];
+			}
+			return result;
+		}
+		/*[size]～[end]までを取得 AMP実装*/
+		FastVector<T> skip_amp(int size) {
+			FAST_CONTAINER_EXCEPTION_CHECK(size <= this->size, fast_container_exception());
+			int res_size = this->size - size;
+			FastVector<T> result(res_size);
+			concurrency::array_view<const T, 1> av_entity(this->size, &entity[0]);
+			concurrency::array_view<T, 1> av_result(res_size, &result[0]);
+			av_result.discard_data();
+			concurrency::parallel_for_each(av_result.extent, [=](concurrency::index<1> idx) restrict(amp) {
+				av_result[idx] = av_entity[size + idx];
+			});
+			av_result.synchronize();
+			return result;
+		}
+		/*[size]～[end]までを取得 PPL実装*/
+		FastVector<T> skip_ppl(int size) {
+			FAST_CONTAINER_EXCEPTION_CHECK(size <= this->size, fast_container_exception());
+			int res_size = this->size - size;
+			FastVector<T> result(res_size);
+			concurrency::parallel_for<int>(0, res_size, [&](int i) {
+				result[i] = entity[size + i];
+			});
+			return result;
+		}
+
 		/*バッチの取得 実装モード切替*/
 		FastVector<T> batch(FastVector<int>& mask) { return SWITCH_FAST_CONTAONER_FUNCTION(batch)(mask); }
 		/*バッチの取得*/
 		FastVector<T> batch_com(FastVector<int>& mask) {
 			FAST_CONTAINER_EXCEPTION_CHECK(size >= mask.get_size(), fast_container_exception());
-			int row = mask.get_size();
-			FastVector<T> result(row);
-			for (int i = 0; i < row; i++) {
+			int m_size = mask.get_size();
+			FastVector<T> result(m_size);
+			for (int i = 0; i < m_size; i++) {
 				result[i] = entity[mask[i]];
 			}
 			return result;
@@ -266,9 +340,9 @@ namespace FastContainer {
 		/*バッチの取得 PPL実装*/
 		FastVector<T> batch_ppl(FastVector<int>& mask) {
 			FAST_CONTAINER_EXCEPTION_CHECK(size >= mask.get_size(), fast_container_exception());
-			int row = mask.get_size();
-			FastVector<T> result(row);
-			concurrency::parallel_for<int>(0, row, [&](int i) {
+			int m_size = mask.get_size();
+			FastVector<T> result(m_size);
+			concurrency::parallel_for<int>(0, m_size, [&](int i) {
 				result[i] = entity[mask[i]];
 			});
 			return result;
@@ -362,7 +436,7 @@ namespace FastContainer {
 			std::ostringstream stream;
 			stream << "[" << size << "](";
 			for (int i = 0; i < size; i++) {
-				if (i) stream << "," << entity[i];
+				if (i) stream << ", " << entity[i];
 				else stream << entity[i];
 			}
 			stream << ")";

@@ -53,6 +53,11 @@ namespace FastContainer {
 		T& operator[](int idx) { return entity[idx]; }
 		T& operator()(int row, int col) { return entity[row * column_size + col]; }
 
+		auto begin() { return entity.begin(); }
+		auto begin() const { return entity.begin(); }
+		auto end() { return entity.end(); }
+		auto end() const { return entity.end(); }
+
 		/*FastVectorへ変換*/
 		FastVector<T> to_FastVector() {
 			FastVector<T> result(entity);
@@ -322,14 +327,12 @@ namespace FastContainer {
 			}
 			return result;
 		}
-
 		/*合計*/
 		T sum() {
 			T result = 0;
 			for (auto x : entity) result += x;
 			return result;
 		}
-
 		/*平均*/
 		T mean() {
 			return sum() / size;
@@ -897,7 +900,7 @@ namespace FastContainer {
 		FastVector<T> row(int row) { return SWITCH_FAST_CONTAONER_FUNCTION(row)(row); }
 		/*指定行を取得*/
 		FastVector<T> row_com(int row) {
-			FAST_CONTAINER_EXCEPTION_CHECK(row >= row_size, fast_container_exception());
+			FAST_CONTAINER_EXCEPTION_CHECK(row <= row_size, fast_container_exception());
 			FastVector<T> result(column_size);
 			for (int i = 0, j = row * column_size; i < column_size; i++, j++) {
 				result[i] = entity[j];
@@ -906,7 +909,7 @@ namespace FastContainer {
 		}
 		/*指定行を取得 AMP実装*/
 		FastVector<T> row_amp(int row) {
-			FAST_CONTAINER_EXCEPTION_CHECK(row >= row_size, fast_container_exception());
+			FAST_CONTAINER_EXCEPTION_CHECK(row <= row_size, fast_container_exception());
 			FastVector<T> result(column_size);
 			concurrency::array_view<const T, 2> av_entity(row_size, column_size, &entity[0]);
 			concurrency::array_view<T, 1> av_result(column_size, &result[0]);
@@ -919,7 +922,7 @@ namespace FastContainer {
 		}
 		/*指定行を取得 PPL実装*/
 		FastVector<T> row_ppl(int row) {
-			FAST_CONTAINER_EXCEPTION_CHECK(row >= row_size, fast_container_exception());
+			FAST_CONTAINER_EXCEPTION_CHECK(row <= row_size, fast_container_exception());
 			FastVector<T> result(column_size);
 			concurrency::parallel_for<int>(0, column_size, [&](int i) {
 				result[i] = entity[row * column_size + i];
@@ -931,7 +934,7 @@ namespace FastContainer {
 		FastVector<T> column(int col) { return SWITCH_FAST_CONTAONER_FUNCTION(column)(col); }
 		/*指定列を取得*/
 		FastVector<T> column_com(int col) {
-			FAST_CONTAINER_EXCEPTION_CHECK(col >= column_size, fast_container_exception());
+			FAST_CONTAINER_EXCEPTION_CHECK(col <= column_size, fast_container_exception());
 			FastVector<T> result(row_size);
 			for (int i = 0, j = col; i < row_size; i++, j += column_size) {
 				result[i] = entity[j];
@@ -940,7 +943,7 @@ namespace FastContainer {
 		}
 		/*指定列を取得 AMP実装*/
 		FastVector<T> column_amp(int col) {
-			FAST_CONTAINER_EXCEPTION_CHECK(col >= column_size, fast_container_exception());
+			FAST_CONTAINER_EXCEPTION_CHECK(col <= column_size, fast_container_exception());
 			FastVector<T> result(row_size);
 			concurrency::array_view<const T, 2> av_entity(row_size, column_size, &entity[0]);
 			concurrency::array_view<T, 1> av_result(row_size, &result[0]);
@@ -953,10 +956,177 @@ namespace FastContainer {
 		}
 		/*指定列を取得 PPL実装*/
 		FastVector<T> column_ppl(int col) {
-			FAST_CONTAINER_EXCEPTION_CHECK(col >= column_size, fast_container_exception());
+			FAST_CONTAINER_EXCEPTION_CHECK(col <= column_size, fast_container_exception());
 			FastVector<T> result(row_size);
 			concurrency::parallel_for<int>(0, row_size, [&](int i) {
 				result[i] = entity[i * column_size + col];
+			});
+			return result;
+		}
+
+		/*行[0]～[row]までを取得 実装モード切替*/
+		FastMatrix<T> take_rows(int row) { return SWITCH_FAST_CONTAONER_FUNCTION(take_rows)(row); }
+		/*行[0]～[row]までを取得*/
+		FastMatrix<T> take_rows_com(int row) {
+			FAST_CONTAINER_EXCEPTION_CHECK(row <= row_size, fast_container_exception());
+			int res_size = row * column_size;
+			FastMatrix<T> result(row, column_size);
+			for (int i = 0; i < res_size; i++) {
+				result[i] = entity[i];
+			}
+			return result;
+		}
+		/*行[0]～[row]までを取得 AMP実装*/
+		FastMatrix<T> take_rows_amp(int row) {
+			FAST_CONTAINER_EXCEPTION_CHECK(row <= row_size, fast_container_exception());
+			int res_size = row * column_size;
+			FastMatrix<T> result(row, column_size);
+			concurrency::array_view<const T, 1> av_entity(size, &entity[0]);
+			concurrency::array_view<T, 1> av_result(res_size, &result[0]);
+			av_result.discard_data();
+			concurrency::parallel_for_each(av_result.extent, [=](concurrency::index<1> idx) restrict(amp) {
+				av_result[idx] = av_entity[idx];
+			});
+			av_result.synchronize();
+			return result;
+		}
+		/*行[0]～[row]までを取得 PPL実装*/
+		FastMatrix<T> take_rows_ppl(int row) {
+			FAST_CONTAINER_EXCEPTION_CHECK(row <= row_size, fast_container_exception());
+			int res_size = row * column_size;
+			FastMatrix<T> result(row, column_size);
+			concurrency::parallel_for<int>(0, res_size, [&](int i) {
+				result[i] = entity[i];
+			});
+			return result;
+		}
+
+		/*行[row]～[end]までを取得 実装モード切替*/
+		FastMatrix<T> skip_rows(int row) { return SWITCH_FAST_CONTAONER_FUNCTION(skip_rows)(row); }
+		/*行[row]～[end]までを取得*/
+		FastMatrix<T> skip_rows_com(int row) {
+			FAST_CONTAINER_EXCEPTION_CHECK(row < row_size, fast_container_exception());
+			int res_row = row_size - row;
+			int res_size = res_row * column_size;
+			int skip_size = row * column_size;
+			FastMatrix<T> result(res_row, column_size);
+			for (int i = 0; i < res_size; i++) {
+				result[i] = entity[skip_size + i];
+			}
+			return result;
+		}
+		/*行[row]～[end]までを取得 AMP実装*/
+		FastMatrix<T> skip_rows_amp(int row) {
+			FAST_CONTAINER_EXCEPTION_CHECK(row < row_size, fast_container_exception());
+			int res_row = row_size - row;
+			int res_size = res_row * column_size;
+			int skip_size = row * column_size;
+			FastMatrix<T> result(res_row, column_size);
+			concurrency::array_view<const T, 1> av_entity(size, &entity[0]);
+			concurrency::array_view<T, 1> av_result(res_size, &result[0]);
+			av_result.discard_data();
+			concurrency::parallel_for_each(av_result.extent, [=](concurrency::index<1> idx) restrict(amp) {
+				av_result[idx] = av_entity[skip_size + idx];
+			});
+			av_result.synchronize();
+			return result;
+		}
+		/*行[row]～[end]までを取得 PPL実装*/
+		FastMatrix<T> skip_rows_ppl(int row) {
+			FAST_CONTAINER_EXCEPTION_CHECK(row < row_size, fast_container_exception());
+			int res_row = row_size - row;
+			int res_size = res_row * column_size;
+			int skip_size = row * column_size;
+			FastMatrix<T> result(res_row, column_size);
+			concurrency::parallel_for<int>(0, res_size, [&](int i) {
+				result[i] = entity[skip_size + i];
+			});
+			return result;
+		}
+
+		/*列[0]～[col]までを取得 実装モード切替*/
+		FastMatrix<T> take_columns(int col) { return SWITCH_FAST_CONTAONER_FUNCTION(take_columns)(col); }
+		/*列[0]～[col]までを取得*/
+		FastMatrix<T> take_columns_com(int col) {
+			FAST_CONTAINER_EXCEPTION_CHECK(col <= column_size, fast_container_exception());
+			FastMatrix<T> result(row_size, col);
+			for (int i = 0; i < row_size; i++) {
+				int res_offset = i * col;
+				int ent_offset = i * column_size;
+				for (int j = 0; j < col; j++) {
+					result[res_offset + j] = entity[ent_offset + j];
+				}
+			}
+			return result;
+		}
+		/*列[0]～[col]までを取得 AMP実装*/
+		FastMatrix<T> take_columns_amp(int col) {
+			FAST_CONTAINER_EXCEPTION_CHECK(col <= column_size, fast_container_exception());
+			FastMatrix<T> result(row_size, col);
+			concurrency::array_view<const T, 2> av_entity(row_size, column_size, &entity[0]);
+			concurrency::array_view<T, 2> av_result(row_size, col, &result[0]);
+			av_result.discard_data();
+			concurrency::parallel_for_each(av_result.extent, [=](concurrency::index<2> idx) restrict(amp) {
+				av_result[idx] = av_entity[idx];
+			});
+			av_result.synchronize();
+			return result;
+		}
+		/*列[0]～[col]までを取得 PPL実装*/
+		FastMatrix<T> take_columns_ppl(int col) {
+			FAST_CONTAINER_EXCEPTION_CHECK(col <= column_size, fast_container_exception());
+			FastMatrix<T> result(row_size, col);
+			concurrency::parallel_for<int>(0, row_size, [&](int i) {
+				int res_offset = i * col;
+				int ent_offset = i * column_size;
+				for (int j = 0; j < col; j++) {
+					result[res_offset + j] = entity[ent_offset + j];
+				}
+			});
+			return result;
+		}
+
+		/*列[col]～[end]までを取得 実装モード切替*/
+		FastMatrix<T> skip_columns(int col) { return SWITCH_FAST_CONTAONER_FUNCTION(skip_columns)(col); }
+		/*列[col]～[end]までを取得*/
+		FastMatrix<T> skip_columns_com(int col) {
+			FAST_CONTAINER_EXCEPTION_CHECK(col < column_size, fast_container_exception());
+			int res_col = column_size - col;
+			FastMatrix<T> result(row_size, res_col);
+			for (int i = 0; i < row_size; i++) {
+				int res_offset = i * res_col;
+				int ent_offset = i * column_size + col;
+				for (int j = 0; j < res_col; j++) {
+					result[res_offset + j] = entity[ent_offset + j];
+				}
+			}
+			return result;
+		}
+		/*列[col]～[end]までを取得 AMP実装*/
+		FastMatrix<T> skip_columns_amp(int col) {
+			FAST_CONTAINER_EXCEPTION_CHECK(col < column_size, fast_container_exception());
+			int res_col = column_size - col;
+			FastMatrix<T> result(row_size, res_col);
+			concurrency::array_view<const T, 2> av_entity(row_size, column_size, &entity[0]);
+			concurrency::array_view<T, 2> av_result(row_size, res_col, &result[0]);
+			av_result.discard_data();
+			concurrency::parallel_for_each(av_result.extent, [=](concurrency::index<2> idx) restrict(amp) {
+				av_result[idx] = av_entity[idx[0]][col + idx[1]];
+			});
+			av_result.synchronize();
+			return result;
+		}
+		/*列[col]～[end]までを取得 PPL実装*/
+		FastMatrix<T> skip_columns_ppl(int col) {
+			FAST_CONTAINER_EXCEPTION_CHECK(col < column_size, fast_container_exception());
+			int res_col = column_size - col;
+			FastMatrix<T> result(row_size, res_col);
+			concurrency::parallel_for<int>(0, row_size, [&](int i) {
+				int res_offset = i * res_col;
+				int ent_offset = i * column_size + col;
+				for (int j = 0; j < res_col; j++) {
+					result[res_offset + j] = entity[ent_offset + j];
+				}
 			});
 			return result;
 		}
@@ -1214,7 +1384,7 @@ namespace FastContainer {
 			NormalRandom<T> rnd(mean, sd);
 			return result.apply_com_func([&](T x) { return rnd.generate(); });
 		}
-		/*平均:mean, 標準偏差:sd ランダムなFastMatrixを生成 PPL実装*/
+		/*平均:mean, 標準偏差:sd のランダムなFastMatrixを生成 PPL実装*/
 		static FastMatrix<T> normal_random_ppl(int row, int col, T mean = 0, T sd = 1) {
 			FastMatrix<T> result(row, col);
 			NormalRandom<T> rnd(mean, sd);

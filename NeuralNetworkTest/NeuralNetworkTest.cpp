@@ -48,18 +48,18 @@ void neuralnetwork_test() {
 	auto test_lbl = fmd(mnist.readLabelFileOneHot("mnist\\t10k-labels.idx1-ubyte"));
 
 	int train_num = 100;
-	int batch_size = 1000;
+	int batch_size = 100;
 	int tbatch_size = 100;
 	int input_size = train_img.get_column_size();
-	int hidden_size = 50;
+	int hidden_size = 100;
 	int output_size = train_lbl.get_column_size();
 	double weight_init = 0.05;
 
 	Network<double> net;
 
-	net.layers.push_back(new AffineLayer<double>(weight_init * fmd::normal_random_ppl(input_size, hidden_size), fvd(hidden_size)));
+	net.layers.push_back(new AffineLayer<double>(weight_init * fmd::normal_random_ppl(input_size, hidden_size), weight_init * fvd::real_random_ppl(hidden_size)));
 	net.layers.push_back(new ReluLayer<double>());
-	net.layers.push_back(new AffineLayer<double>(weight_init * fmd::normal_random_ppl(hidden_size, output_size), fvd(output_size)));
+	net.layers.push_back(new AffineLayer<double>(weight_init * fmd::normal_random_ppl(hidden_size, output_size), weight_init * fvd::real_random_ppl(output_size)));
 	net.lastLayer = new SoftmaxWithLossLayer<double>();
 
 	for (int i = 0; i < train_num; i++) {
@@ -77,8 +77,8 @@ void neuralnetwork_test() {
 }
 
 void fast_container_test() {
-	auto x1 = FastMatrix<double>::real_random_ppl(1000, 500);
-	auto x2 = FastMatrix<double>::real_random_ppl(500, 50);
+	auto x1 = FastMatrix<double>::int_random_ppl(3, 10, 0, 10);
+	auto x2 = FastMatrix<double>::int_random_ppl(10, 5, 0, 10);
 
 	//cout << x1.to_string().c_str() << endl;
 	//cout << x2.to_string().c_str() << endl;
@@ -95,16 +95,20 @@ void fast_container_test() {
 	//	cout << y.to_string().c_str() << endl;
 	//};
 
-	auto y1 = x1.dot_com(x2);
-	auto y2 = x1.dot_amp(x2);
-	auto y3 = x1.dot_ppl(x2);
+	//auto y1 = x1.dot_com(x2);
+	//auto y2 = x1.dot_amp(x2);
+	//auto y3 = x1.dot_ppl(x2);
 
 	//cout << "com: " << y1.to_string().c_str() << endl << endl;
 	//cout << "amp: " << y2.to_string().c_str() << endl << endl;
 	//cout << "ppl: " << y3.to_string().c_str() << endl << endl;
-	cout << "com != amp: " << (y1 - y2).abs_com().sum() << endl;
-	cout << "amp != ppl: " << (y2 - y3).abs_com().sum() << endl;
-	cout << "com != ppl: " << (y1 - y3).abs_com().sum() << endl;
+	//cout << "com != amp: " << (y1 - y2).abs_com().sum() << endl;
+	//cout << "amp != ppl: " << (y2 - y3).abs_com().sum() << endl;
+	//cout << "com != ppl: " << (y1 - y3).abs_com().sum() << endl;
+
+	//for (auto x : y1) {
+	//	cout << x << endl;
+	//}
 
 	//cout_calc_span(func1, 1, "com");
 	//cout_calc_span(func2, 1, "amp");
