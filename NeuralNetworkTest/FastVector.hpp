@@ -28,7 +28,7 @@ namespace FastContainer {
 		auto end() const { return entity.end(); }
 
 		/*そのまま返す*/
-		FastVector<T> identity() { return this; }
+		FastVector<T> identity() { return *this; }
 
 		/*絶対値 実装モード切替*/
 		FastVector<T> abs() { return SWITCH_FAST_CONTAONER_FUNCTION(abs)(); }
@@ -125,20 +125,20 @@ namespace FastContainer {
 		/*ソフトマックス関数*/
 		FastVector<T> softmax_com() {
 			T max = get_max();
-			T total = apply_com_func([=](T x) { return std::exp(x - max); }).sum();
-			return apply_com_func([=](T x) { return std::exp(x - max) / total; });
+			auto ex = apply_com_func([=](T x) { return std::exp(x - max); });
+			return ex / ex.sum();
 		}
 		/*ソフトマックス関数 AMP実装*/
 		FastVector<T> softmax_amp() {
 			T max = get_max();
-			T total = apply_amp_func([=](T x) restrict(amp) { return concurrency::fast_math::exp(x - max); }).sum();
-			return apply_amp_func([=](T x) restrict(amp) { return concurrency::fast_math::exp(x - max) / total; });
+			auto ex = apply_amp_func([=](T x) restrict(amp) { return concurrency::fast_math::exp(x - max); });
+			return ex / ex.sum();
 		}
 		/*ソフトマックス関数 PPL実装*/
 		FastVector<T> softmax_ppl() {
 			T max = get_max();
-			T total = apply_ppl_func([=](T x) { return std::exp(x - max); }).sum();
-			return apply_ppl_func([=](T x) { return std::exp(x - max) / total; });
+			auto ex = apply_ppl_func([=](T x) { return std::exp(x - max); });
+			return ex / ex.sum();
 		}
 
 		/*数値微分 実装モード切替
@@ -456,16 +456,16 @@ namespace FastContainer {
 			return result.apply_ppl_func([&](T x) { return rnd.generate(); });
 		}
 		/*ランダムなFastVector<int>を生成*/
-		static FastVector<int> int_random_com(int size, int min = -1, int max = 1) {
-			FastVector<int> result(size);
+		static FastVector<T> int_random_com(int size, int min = -1, int max = 1) {
+			FastVector<T> result(size);
 			IntRandom rnd(min, max);
-			return result.apply_com_func([&](int x) { return rnd.generate(); });
+			return result.apply_com_func([&](T x) { return rnd.generate(); });
 		}
 		/*ランダムなFastVector<int>を生成 PPL実装*/
-		static FastVector<int> int_random_ppl(int size, int min = -1, int max = 1) {
-			FastVector<int> result(size);
+		static FastVector<T> int_random_ppl(int size, int min = -1, int max = 1) {
+			FastVector<T> result(size);
 			IntRandom rnd(min, max);
-			return result.apply_ppl_func([&](int x) { return rnd.generate(); });
+			return result.apply_ppl_func([&](T x) { return rnd.generate(); });
 		}
 		/*平均:mean, 標準偏差:sd ランダムなFastVectorを生成*/
 		static FastVector<T> normal_random_com(int size, T mean = 0, T sd = 1) {

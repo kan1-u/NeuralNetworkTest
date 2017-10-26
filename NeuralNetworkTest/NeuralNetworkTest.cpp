@@ -4,12 +4,12 @@
 #include "stdafx.h"
 
 //#define FAST_CONTAONER_FUNCTIONS_COM_MODE
-//#define FAST_CONTAONER_FUNCTIONS_AMP_MODE
-#define FAST_CONTAONER_FUNCTIONS_PPL_MODE
+#define FAST_CONTAONER_FUNCTIONS_AMP_MODE
+//#define FAST_CONTAONER_FUNCTIONS_PPL_MODE
 
 //#define FAST_CONTAONER_OPERATOR_OVERLOAD_COM_MODE
-//#define FAST_CONTAONER_OPERATOR_OVERLOAD_AMP_MODE
-#define FAST_CONTAONER_OPERATOR_OVERLOAD_PPL_MODE
+#define FAST_CONTAONER_OPERATOR_OVERLOAD_AMP_MODE
+//#define FAST_CONTAONER_OPERATOR_OVERLOAD_PPL_MODE
 
 //#define FAST_CONTAINER_NO_EXCEPTION
 
@@ -27,7 +27,7 @@ using namespace FastContainer;
 using namespace MnistDataset;
 
 template<typename T>
-void cout_calc_span(T func, int cycle_num, std::string str) {
+void cout_calc_span(T func, int cycle_num = 1, std::string str = "calc") {
 	clock_t start = clock();
 	for (int i = 0; i < cycle_num; i++) {
 		func();
@@ -42,13 +42,13 @@ void neuralnetwork_test() {
 	using fmd = FastMatrix<double>;
 
 	Mnist mnist;
-	auto train_img = fmd(mnist.readTrainingFile("mnist\\train-images.idx3-ubyte")).normalization();
-	auto train_lbl = fmd(mnist.readLabelFileOneHot("mnist\\train-labels.idx1-ubyte"));
-	auto test_img = fmd(mnist.readTrainingFile("mnist\\t10k-images.idx3-ubyte")).normalization();
-	auto test_lbl = fmd(mnist.readLabelFileOneHot("mnist\\t10k-labels.idx1-ubyte"));
+	auto train_img = fmd(mnist.read_training_file("mnist\\train-images.idx3-ubyte")).normalization();
+	auto train_lbl = fmd(mnist.read_label_file_onehot("mnist\\train-labels.idx1-ubyte"));
+	auto test_img = fmd(mnist.read_training_file("mnist\\t10k-images.idx3-ubyte")).normalization();
+	auto test_lbl = fmd(mnist.read_label_file_onehot("mnist\\t10k-labels.idx1-ubyte"));
 
 	int train_num = 100;
-	int batch_size = 100;
+	int batch_size = 1000;
 	int tbatch_size = 100;
 	int input_size = train_img.get_column_size();
 	int hidden_size = 100;
@@ -76,48 +76,8 @@ void neuralnetwork_test() {
 	}
 }
 
-void fast_container_test() {
-	auto x1 = FastMatrix<double>::int_random_ppl(3, 10, 0, 10);
-	auto x2 = FastMatrix<double>::int_random_ppl(10, 5, 0, 10);
-
-	//cout << x1.to_string().c_str() << endl;
-	//cout << x2.to_string().c_str() << endl;
-	//auto func1 = [&]() {
-	//	auto y = x1.dot_com(x2);
-	//	cout << y.to_string().c_str() << endl;
-	//};
-	//auto func2 = [&]() {
-	//	auto y = x1.dot_amp(x2);
-	//	cout << y.to_string().c_str() << endl;
-	//};
-	//auto func3 = [&]() {
-	//	auto y = x1.dot_ppl(x2);
-	//	cout << y.to_string().c_str() << endl;
-	//};
-
-	//auto y1 = x1.dot_com(x2);
-	//auto y2 = x1.dot_amp(x2);
-	//auto y3 = x1.dot_ppl(x2);
-
-	//cout << "com: " << y1.to_string().c_str() << endl << endl;
-	//cout << "amp: " << y2.to_string().c_str() << endl << endl;
-	//cout << "ppl: " << y3.to_string().c_str() << endl << endl;
-	//cout << "com != amp: " << (y1 - y2).abs_com().sum() << endl;
-	//cout << "amp != ppl: " << (y2 - y3).abs_com().sum() << endl;
-	//cout << "com != ppl: " << (y1 - y3).abs_com().sum() << endl;
-
-	//for (auto x : y1) {
-	//	cout << x << endl;
-	//}
-
-	//cout_calc_span(func1, 1, "com");
-	//cout_calc_span(func2, 1, "amp");
-	//cout_calc_span(func3, 1, "ppl");
-}
-
 int main()
 {
-	//fast_container_test();
 	neuralnetwork_test();
 
 	getchar();

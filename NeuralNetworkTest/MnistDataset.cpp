@@ -15,7 +15,7 @@ namespace MnistDataset {
 		return ((int)c1 << 24) + ((int)c2 << 16) + ((int)c3 << 8) + c4;
 	}
 
-	vector<vector<double> > Mnist::readTrainingFile(string filename) {
+	FastContainer::FastMatrix<double> Mnist::read_training_file(string filename) {
 		ifstream ifs(filename.c_str(), std::ios::in | std::ios::binary);
 		int magic_number = 0;
 		int number_of_images = 0;
@@ -32,24 +32,22 @@ namespace MnistDataset {
 		ifs.read((char*)&cols, sizeof(cols));
 		cols = reverseInt(cols);
 
-		vector<vector<double> > images(number_of_images);
+		FastContainer::FastMatrix<double> images(number_of_images, rows * cols);
 		cout << magic_number << " " << number_of_images << " " << rows << " " << cols << endl;
 
 		for (int i = 0; i < number_of_images; i++) {
-			images[i].resize(rows * cols);
-
 			for (int row = 0; row < rows; row++) {
 				for (int col = 0; col < cols; col++) {
 					unsigned char temp = 0;
 					ifs.read((char*)&temp, sizeof(temp));
-					images[i][rows*row + col] = (double)temp;
+					images(i, rows * row + col) = (double)temp;
 				}
 			}
 		}
 		return images;
 	}
 
-	vector<double> Mnist::readLabelFile(string filename) {
+	FastContainer::FastVector<double> Mnist::read_label_file(string filename) {
 		ifstream ifs(filename.c_str(), std::ios::in | std::ios::binary);
 		int magic_number = 0;
 		int number_of_images = 0;
@@ -60,7 +58,7 @@ namespace MnistDataset {
 		ifs.read((char*)&number_of_images, sizeof(number_of_images));
 		number_of_images = reverseInt(number_of_images);
 
-		vector<double> label(number_of_images);
+		FastContainer::FastVector<double> label(number_of_images);
 
 		cout << number_of_images << endl;
 
@@ -72,7 +70,7 @@ namespace MnistDataset {
 		return label;
 	}
 
-	vector<vector<double>> Mnist::readLabelFileOneHot(string filename) {
+	FastContainer::FastMatrix<double> Mnist::read_label_file_onehot(string filename) {
 		ifstream ifs(filename.c_str(), std::ios::in | std::ios::binary);
 		int magic_number = 0;
 		int number_of_images = 0;
@@ -83,7 +81,7 @@ namespace MnistDataset {
 		ifs.read((char*)&number_of_images, sizeof(number_of_images));
 		number_of_images = reverseInt(number_of_images);
 
-		vector<vector<double>> label(number_of_images);
+		FastContainer::FastMatrix<double> label(number_of_images, 10);
 
 		cout << number_of_images << endl;
 
@@ -92,7 +90,7 @@ namespace MnistDataset {
 			char digit;
 			ifs.read((char*)&digit, sizeof(char));
 			temp[digit] = 1.0;
-			label[i] = temp;
+			for (int j = 0; j < 10; ++j) label(i, j) = temp[j];
 		}
 		return label;
 	}

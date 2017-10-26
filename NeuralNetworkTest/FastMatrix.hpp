@@ -19,7 +19,7 @@ namespace FastContainer {
 			FAST_CONTAINER_EXCEPTION_CHECK(size == vec.size(), fast_container_exception());
 			entity = vec;
 		}
-		FastMatrix(FastVector<T>& vec, int row) {
+		FastMatrix(FastVector<T> vec, int row) {
 			row_size = row;
 			column_size = vec.get_size() / row_size;
 			size = row_size * column_size;
@@ -65,7 +65,7 @@ namespace FastContainer {
 		}
 
 		/*そのまま返す*/
-		FastMatrix<T> identity() { return this; }
+		FastMatrix<T> identity() { return *this; }
 
 		/*絶対値 実装モード切替*/
 		FastMatrix<T> abs() { return SWITCH_FAST_CONTAONER_FUNCTION(abs)(); }
@@ -272,17 +272,17 @@ namespace FastContainer {
 		/*交差エントロピー誤差*/
 		T cross_entropy_error_com(FastMatrix<T>& teacher, T delta = 0.0000001) {
 			auto buf = apply_com_combo_func([=](T x1, T x2) { return (T)-1 * x2 * std::log(x1 + delta) + (1 - x2) * std::log(1 - x1 + delta); }, teacher);
-			return buf.sum();
+			return buf.sum() / row_size;
 		}
 		/*交差エントロピー誤差 AMP実装*/
 		T cross_entropy_error_amp(FastMatrix<T>& teacher, T delta = 0.0000001) {
 			auto buf = apply_amp_combo_func([=](T x1, T x2) restrict(amp) { return (T)-1 * x2 * concurrency::fast_math::log(x1 + delta) + (1 - x2) * concurrency::fast_math::log(1 - x1 + delta); }, teacher);
-			return buf.sum();
+			return buf.sum() / row_size;
 		}
 		/*交差エントロピー誤差 PPL実装*/
 		T cross_entropy_error_ppl(FastMatrix<T>& teacher, T delta = 0.0000001) {
 			auto buf = apply_ppl_combo_func([=](T x1, T x2) { return (T)-1 * x2 * std::log(x1 + delta) + (1 - x2) * std::log(1 - x1 + delta); }, teacher);
-			return buf.sum();
+			return buf.sum() / row_size;
 		}
 
 		/*交差エントロピー誤差 分類問題 実装モード切替*/
@@ -318,12 +318,14 @@ namespace FastContainer {
 		/*最大値のインデックス*/
 		T get_argmax() {
 			int result = 0;
-			T max = entity[0];
-			for (int i = 0; i < size; i++) {
-				if (max < entity[i]) {
-					max = entity[i];
+			int i = 0;
+			T max = entity[i];
+			for (auto x : entity) {
+				if (max < x) {
+					max = x;
 					result = i;
 				}
+				++i;
 			}
 			return result;
 		}
@@ -1367,16 +1369,16 @@ namespace FastContainer {
 			return result.apply_ppl_func([&](T x) { return rnd.generate(); });
 		}
 		/*ランダムなFastMatrix<int>を生成*/
-		static FastMatrix<int> int_random_com(int row, int col, int min = -1, int max = 1) {
-			FastMatrix<int> result(row, col);
+		static FastMatrix<T> int_random_com(int row, int col, int min = -1, int max = 1) {
+			FastMatrix<T> result(row, col);
 			IntRandom rnd(min, max);
-			return result.apply_com_func([&](int x) { return rnd.generate(); });
+			return result.apply_com_func([&](T x) { return rnd.generate(); });
 		}
 		/*ランダムなFastMatrix<int>を生成 PPL実装*/
-		static FastMatrix<int> int_random_ppl(int row, int col, int min = -1, int max = 1) {
-			FastMatrix<int> result(row, col);
+		static FastMatrix<T> int_random_ppl(int row, int col, int min = -1, int max = 1) {
+			FastMatrix<T> result(row, col);
 			IntRandom rnd(min, max);
-			return result.apply_ppl_func([&](int x) { return rnd.generate(); });
+			return result.apply_ppl_func([&](T x) { return rnd.generate(); });
 		}
 		/*平均:mean, 標準偏差:sd のランダムなFastMatrixを生成*/
 		static FastMatrix<T> normal_random_com(int row, int col, T mean = 0, T sd = 1) {

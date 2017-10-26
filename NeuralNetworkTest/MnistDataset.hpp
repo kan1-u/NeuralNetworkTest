@@ -1,5 +1,7 @@
 #pragma once
 
+#include "FastContainerLibrary.hpp"
+
 #include <iostream>
 #include <fstream>
 #include <vector>
@@ -10,9 +12,9 @@ namespace MnistDataset {
 
 	class Mnist {
 	public:
-		vector<vector<double> > readTrainingFile(string filename);
-		vector<double> readLabelFile(string filename);
-		vector<vector<double>> readLabelFileOneHot(string filename);
+		FastContainer::FastMatrix<double> read_training_file(string filename);
+		FastContainer::FastVector<double> read_label_file(string filename);
+		FastContainer::FastMatrix<double> read_label_file_onehot(string filename);
 	};
 
 }
