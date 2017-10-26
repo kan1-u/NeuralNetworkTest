@@ -209,12 +209,14 @@ namespace FastContainer {
 		/*最大値のインデックス*/
 		T get_argmax() {
 			int result = 0;
-			T max = entity[0];
-			for (int i = 0; i < size; i++) {
-				if (max < entity[i]) {
-					max = entity[i];
+			int i = 0;
+			T max = entity[i];
+			for (auto x : entity) {
+				if (max < x) {
+					max = x;
 					result = i;
 				}
+				++i;
 			}
 			return result;
 		}
