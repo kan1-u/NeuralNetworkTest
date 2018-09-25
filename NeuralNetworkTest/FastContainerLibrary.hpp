@@ -46,7 +46,8 @@ FastContainerクラスの演算子オーバーライドの実装モードを切替
 #include <iomanip>
 #include <sstream>
 
-#include "Functions.hpp"
+#include "Exception.hpp"
+#include "Random.hpp"
 #include "FastVector.hpp"
 #include "FastMatrix.hpp"
 

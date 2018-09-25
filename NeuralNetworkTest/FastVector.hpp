@@ -233,7 +233,7 @@ namespace FastContainer {
 
 		/*内積*/
 		T dot(FastVector<T>& vec) {
-			FAST_CONTAINER_EXCEPTION_CHECK(size == vec.get_size(), fast_container_exception());
+			if (size != vec.get_size()) throw fast_container_exception();
 			T result = 0;
 			for (int i = 0; i < size; i++) {
 				result += entity[i] * vec[i];
@@ -245,7 +245,7 @@ namespace FastContainer {
 		FastVector<T> take(int size) { return SWITCH_FAST_CONTAONER_FUNCTION(take)(size); }
 		/*[0]～[size]までを取得*/
 		FastVector<T> take_com(int size) {
-			FAST_CONTAINER_EXCEPTION_CHECK(size <= this->size, fast_container_exception());
+			if (size > this->size) throw fast_container_exception();
 			FastVector<T> result(size);
 			for (int i = 0; i < size; i++) {
 				result[i] = entity[i];
@@ -254,7 +254,7 @@ namespace FastContainer {
 		}
 		/*[0]～[size]までを取得 AMP実装*/
 		FastVector<T> take_amp(int size) {
-			FAST_CONTAINER_EXCEPTION_CHECK(size <= this->size, fast_container_exception());
+			if (size > this->size) throw fast_container_exception();
 			FastVector<T> result(size);
 			concurrency::array_view<const T, 1> av_entity(this->size, &entity[0]);
 			concurrency::array_view<T, 1> av_result(size, &result[0]);
@@ -267,7 +267,7 @@ namespace FastContainer {
 		}
 		/*[0]～[size]までを取得 PPL実装*/
 		FastVector<T> take_ppl(int size) {
-			FAST_CONTAINER_EXCEPTION_CHECK(size <= this->size, fast_container_exception());
+			if (size > this->size) throw fast_container_exception();
 			FastVector<T> result(size);
 			concurrency::parallel_for<int>(0, size, [&](int i) {
 				result[i] = entity[i];
@@ -279,7 +279,7 @@ namespace FastContainer {
 		FastVector<T> skip(int size) { return SWITCH_FAST_CONTAONER_FUNCTION(skip)(size); }
 		/*[size]～[end]までを取得*/
 		FastVector<T> skip_com(int size) {
-			FAST_CONTAINER_EXCEPTION_CHECK(size < this->size, fast_container_exception());
+			if (size >= this->size) throw fast_container_exception();
 			int res_size = this->size - size;
 			FastVector<T> result(res_size);
 			for (int i = 0; i < res_size; i++) {
@@ -289,7 +289,7 @@ namespace FastContainer {
 		}
 		/*[size]～[end]までを取得 AMP実装*/
 		FastVector<T> skip_amp(int size) {
-			FAST_CONTAINER_EXCEPTION_CHECK(size <= this->size, fast_container_exception());
+			if (size > this->size) throw fast_container_exception();
 			int res_size = this->size - size;
 			FastVector<T> result(res_size);
 			concurrency::array_view<const T, 1> av_entity(this->size, &entity[0]);
@@ -303,7 +303,7 @@ namespace FastContainer {
 		}
 		/*[size]～[end]までを取得 PPL実装*/
 		FastVector<T> skip_ppl(int size) {
-			FAST_CONTAINER_EXCEPTION_CHECK(size <= this->size, fast_container_exception());
+			if (size > this->size) throw fast_container_exception();
 			int res_size = this->size - size;
 			FastVector<T> result(res_size);
 			concurrency::parallel_for<int>(0, res_size, [&](int i) {
@@ -316,7 +316,7 @@ namespace FastContainer {
 		FastVector<T> batch(FastVector<int>& mask) { return SWITCH_FAST_CONTAONER_FUNCTION(batch)(mask); }
 		/*バッチの取得*/
 		FastVector<T> batch_com(FastVector<int>& mask) {
-			FAST_CONTAINER_EXCEPTION_CHECK(size >= mask.get_size(), fast_container_exception());
+			if (size < mask.get_size()) throw fast_container_exception();
 			int m_size = mask.get_size();
 			FastVector<T> result(m_size);
 			for (int i = 0; i < m_size; i++) {
@@ -326,7 +326,7 @@ namespace FastContainer {
 		}
 		/*バッチの取得 AMP実装*/
 		FastVector<T> batch_amp(FastVector<int>& mask) {
-			FAST_CONTAINER_EXCEPTION_CHECK(size >= mask.get_size(), fast_container_exception());
+			if (size < mask.get_size()) throw fast_container_exception();
 			int m_size = mask.get_size();
 			FastVector<T> result(m_size);
 			concurrency::array_view<const T, 1> av_entity(size, &entity[0]);
@@ -341,7 +341,7 @@ namespace FastContainer {
 		}
 		/*バッチの取得 PPL実装*/
 		FastVector<T> batch_ppl(FastVector<int>& mask) {
-			FAST_CONTAINER_EXCEPTION_CHECK(size >= mask.get_size(), fast_container_exception());
+			if (size < mask.get_size()) throw fast_container_exception();
 			int m_size = mask.get_size();
 			FastVector<T> result(m_size);
 			concurrency::parallel_for<int>(0, m_size, [&](int i) {
@@ -398,7 +398,7 @@ namespace FastContainer {
 		func: T(*func)(T x1, T x2)*/
 		template<class F>
 		FastVector<T> apply_com_combo_func(F func, FastVector<T>& vec) {
-			FAST_CONTAINER_EXCEPTION_CHECK(size == vec.get_size(), fast_container_exception());
+			if (size != vec.get_size()) throw fast_container_exception();
 			FastVector<T> result(size);
 			for (int i = 0; i < size; i++) {
 				result[i] = func(entity[i], vec[i]);
@@ -409,7 +409,7 @@ namespace FastContainer {
 		func: T(*func)(T x1, T x2) restrict(amp)*/
 		template<class F>
 		FastVector<T> apply_amp_combo_func(F func, FastVector<T>& vec) {
-			FAST_CONTAINER_EXCEPTION_CHECK(size == vec.get_size(), fast_container_exception());
+			if (size != vec.get_size()) throw fast_container_exception();
 			FastVector<T> result(size);
 			concurrency::array_view<const T, 1> av_entity(size, &entity[0]);
 			concurrency::array_view<const T, 1> av_vec(size, &vec[0]);
@@ -425,7 +425,7 @@ namespace FastContainer {
 		func: T(*func)(T x1, T x2)*/
 		template<class F>
 		FastVector<T> apply_ppl_combo_func(F func, FastVector<T>& vec) {
-			FAST_CONTAINER_EXCEPTION_CHECK(size == vec.get_size(), fast_container_exception());
+			if (size != vec.get_size()) throw fast_container_exception();
 			FastVector<T> result(size);
 			concurrency::parallel_for<int>(0, size, [&](int i) {
 				result[i] = func(entity[i], vec[i]);
@@ -482,35 +482,10 @@ namespace FastContainer {
 			return result.apply_ppl_func([&](T x) { return rnd.generate(); });
 		}
 		/*重複のないランダムなFastVector<int>を生成*/
-		static FastVector<int> int_hash_random(int size, int min, int max) {
-			FAST_CONTAINER_EXCEPTION_CHECK(min <= max, fast_container_exception());
-			FAST_CONTAINER_EXCEPTION_CHECK(max - min + 1 >= size, fast_container_exception());
-			FastVector<int> result(size);
-			std::random_device rnd;
-			auto mt = std::mt19937(rnd());
-			std::unordered_map<int, int> map;
-			int index = 0;
-			for (int i = 0; i < size; i++) {
-				int val = std::uniform_int_distribution<>(min, max)(mt);
-				std::unordered_map<int, int>::iterator itr = map.find(val);
-				int replaced_val;
-				std::unordered_map<int, int>::iterator replaced_itr = map.find(max);
-				if (replaced_itr != map.end()) {
-					replaced_val = replaced_itr->second;
-				}
-				else replaced_val = max;
-				if (itr == map.end()) {
-					result[index] = val;
-					if (val != max) map.insert(std::make_pair(val, replaced_val));
-				}
-				else {
-					result[index] = itr->second;
-					itr->second = replaced_val;
-				}
-				index++;
-				max--;
-			}
-			return result;
+		static FastVector<T> int_hash_random(int size, int min, int max) {
+			FastVector<T> result(size);
+			IntHashRandom rnd(min, max);
+			return result.apply_com_func([&](T x) { return rnd.generate(); });
 		}
 
 	private:

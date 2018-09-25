@@ -143,13 +143,15 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <Text Include="ReadMe.txt" />
+    <Text Include="LICENSE.txt" />
+    <Text Include="README.md" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Exception.hpp" />
     <ClInclude Include="FastContainerLibrary.hpp" />
     <ClInclude Include="FastMatrix.hpp" />
     <ClInclude Include="FastVector.hpp" />
-    <ClInclude Include="Functions.hpp" />
+    <ClInclude Include="Random.hpp" />
     <ClInclude Include="MnistDataset.hpp" />
     <ClInclude Include="NeuralNetworkLibrary.hpp" />
     <ClInclude Include="stdafx.h" />

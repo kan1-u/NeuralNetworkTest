@@ -39,6 +39,7 @@ void cout_calc_span(T func, int cycle_num = 1, std::string str = "calc") {
 
 void neuralnetwork_test() {
 	using fvd = FastVector<double>;
+	using fvi = FastVector<int>;
 	using fmd = FastMatrix<double>;
 
 	Mnist mnist;
@@ -63,10 +64,10 @@ void neuralnetwork_test() {
 	net.lastLayer = new SoftmaxWithLossLayer<double>();
 
 	for (int i = 0; i < train_num; i++) {
-		auto mask = fvd::int_hash_random(batch_size, 0, train_img.get_row_size() - 1);
+		auto mask = fvi::int_hash_random(batch_size, 0, train_img.get_row_size() - 1);
 		auto x_batch = train_img.batch(mask);
 		auto t_batch = train_lbl.batch(mask);
-		auto tmask = fvd::int_hash_random(tbatch_size, 0, test_img.get_row_size() - 1);
+		auto tmask = fvi::int_hash_random(tbatch_size, 0, test_img.get_row_size() - 1);
 		auto tx_batch = test_img.batch(tmask);
 		auto tt_batch = test_lbl.batch(tmask);
 		net.training(x_batch, t_batch, weight_init);

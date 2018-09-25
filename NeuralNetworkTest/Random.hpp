@@ -2,37 +2,7 @@
 
 #include "FastContainerLibrary.hpp"
 
-#ifdef FAST_CONTAINER_NO_EXCEPTION
-
-#define	FAST_CONTAINER_EXCEPTION_CHECK(expression, e)
-
-#else
-
-#define	FAST_CONTAINER_EXCEPTION_CHECK(expression, e) \
-	if (!(expression)) { \
-		std::cerr << "Check failed in file " << __FILE__ << " at line " << __LINE__ << ":" << std::endl; \
-		std::cerr << #expression << std::endl; \
-		e.raise(); \
-	}
-
-#endif
-
 namespace FastContainer {
-
-	/*—áŠOˆ—*/
-	struct fast_container_exception
-#if ! defined FAST_CONTAINER_NO_EXCEPTION
-		: public std::exception {
-		explicit fast_container_exception(const char *s = "fast_container_exception") : std::exception(s) {}
-		void raise() { throw *this; }
-	};
-#else
-	{
-		fast_container_exception() {}
-		explicit fast_container_exception(const char *) {}
-		void raise() { std::abort(); }
-	};
-#endif
 
 	/*min`max‚Ì—”*/
 	template<typename T>
@@ -43,7 +13,7 @@ namespace FastContainer {
 			return random(mt);
 		}
 		void set_param(T min, T max) {
-			FAST_CONTAINER_EXCEPTION_CHECK(min <= max, fast_container_exception());
+			if (min > max) throw fast_container_exception();
 			mt = std::mt19937(rnd());
 			this->random = std::uniform_real_distribution<>(min, max);
 		}
@@ -61,7 +31,7 @@ namespace FastContainer {
 			return random(mt);
 		}
 		void set_param(int min, int max) {
-			FAST_CONTAINER_EXCEPTION_CHECK(min <= max, fast_container_exception());
+			if (min > max) throw fast_container_exception();
 			mt = std::mt19937(rnd());
 			this->random = std::uniform_int_distribution<>(min, max);
 		}
@@ -87,6 +57,53 @@ namespace FastContainer {
 		std::random_device rnd;
 		std::mt19937 mt;
 		std::normal_distribution<> random;
+	};
+
+	/*min`max‚Ìd•¡‚Ì‚È‚¢®”—”
+	(ˆê“x¶¬‚µ‚½’l‚Í¶¬‚µ‚È‚¢)*/
+	class IntHashRandom {
+	public:
+		IntHashRandom(int min, int max) { set_param(min, max); }
+		int generate() {
+			if (min > now_max) throw fast_container_exception();
+			int result;
+			int val = std::uniform_int_distribution<>(min, now_max)(mt);
+			auto itr = map.find(val);
+			int replaced_val;
+			auto replaced_itr = map.find(now_max);
+			if (replaced_itr != map.end()) {
+				replaced_val = replaced_itr->second;
+			}
+			else replaced_val = now_max;
+			if (itr == map.end()) {
+				result = val;
+				if (val != now_max) map.insert(std::make_pair(val, replaced_val));
+			}
+			else {
+				result = itr->second;
+				itr->second = replaced_val;
+			}
+			now_max--;
+			return result;
+		}
+		void set_param(int min, int max) {
+			if (min > max) throw fast_container_exception();
+			this->min = min;
+			this->max = max;
+			now_max = max;
+			mt = std::mt19937(rnd());
+		}
+		void reset_param() {
+			map.clear();
+			now_max = max;
+		}
+	private:
+		std::random_device rnd;
+		std::mt19937 mt;
+		std::unordered_map<int, int> map;
+		int min;
+		int max;
+		int now_max;
 	};
 
 }
